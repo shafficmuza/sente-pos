@@ -1,13 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.promedia.sentepos.db;
+
 import java.sql.*;
-/**
- *
- * @author shaffic
- */
+
 public final class Db {
     private static final String URL = "jdbc:sqlite:app.db";
     private static volatile boolean initialized = false;
@@ -24,11 +18,10 @@ public final class Db {
     public static Connection get() throws SQLException {
         Connection c = DriverManager.getConnection(URL);
         if (!initialized) {
-            // Apply one-time PRAGMAs (best-effort)
             try (Statement st = c.createStatement()) {
-                st.execute("PRAGMA journal_mode = WAL");      // better concurrent reads + crash-safety
-                st.execute("PRAGMA synchronous = NORMAL");     // good balance of safety/perf
-                st.execute("PRAGMA foreign_keys = ON");        // enforce FK
+                st.execute("PRAGMA journal_mode = WAL");
+                st.execute("PRAGMA synchronous = NORMAL");
+                st.execute("PRAGMA foreign_keys = ON");
             } catch (SQLException ignore) {}
             initialized = true;
         }
