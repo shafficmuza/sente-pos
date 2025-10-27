@@ -192,4 +192,32 @@ public final class ProductDAO {
             rs.getString("created_at")
         );
     }
+    
+    public static ProductRow findBySkuOrBarcode(String code) throws SQLException {
+    String sql = SELECT_BASE + "WHERE (sku=? OR barcode=?) AND active=1";
+    try (Connection c = Db.get();
+         PreparedStatement ps = c.prepareStatement(sql)) {
+        ps.setString(1, code);
+        ps.setString(2, code);
+        try (ResultSet rs = ps.executeQuery()) {
+            return rs.next() ? mapRow(rs) : null;
+        }
+    }
+}
+
+public static List<ProductRow> searchByNameOrSku(String q) throws SQLException {
+    String sql = SELECT_BASE + "WHERE active=1 AND (item_name LIKE ? OR sku LIKE ?) ORDER BY item_name";
+    try (Connection c = Db.get();
+         PreparedStatement ps = c.prepareStatement(sql)) {
+        String like = "%" + q + "%";
+        ps.setString(1, like);
+        ps.setString(2, like);
+        try (ResultSet rs = ps.executeQuery()) {
+            List<ProductRow> out = new ArrayList<>();
+            while (rs.next()) out.add(mapRow(rs));
+            return out;
+        }
+    }
+}
+
 }
