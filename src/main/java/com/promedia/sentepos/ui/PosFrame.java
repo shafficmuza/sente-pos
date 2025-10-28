@@ -33,6 +33,14 @@ public class PosFrame extends javax.swing.JFrame {
         btnAdd = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblCart = new javax.swing.JTable();
+        lblSubtotal = new javax.swing.JLabel();
+        lblVat = new javax.swing.JLabel();
+        lblTotal = new javax.swing.JLabel();
+        btnRemove = new javax.swing.JButton();
+        btnClear = new javax.swing.JButton();
+        btnPayCash = new javax.swing.JButton();
+        btnFinish = new javax.swing.JButton();
+        btnCancel = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -55,22 +63,56 @@ public class PosFrame extends javax.swing.JFrame {
         ));
         jScrollPane1.setViewportView(tblCart);
 
+        lblSubtotal.setText("lblSubtotal");
+
+        lblVat.setText("lblVat");
+
+        lblTotal.setText("lblTotal");
+
+        btnRemove.setText("btnRemove");
+
+        btnClear.setText("btnClear");
+
+        btnPayCash.setText("btnPayCash");
+
+        btnFinish.setText("btnFinish");
+
+        btnCancel.setText("btnCancel");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(53, 53, 53)
-                .addComponent(txtScan, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(49, 49, 49)
-                .addComponent(txtQty, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(btnAdd)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap(76, Short.MAX_VALUE)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(62, 62, 62))
+                .addComponent(lblSubtotal)
+                .addGap(89, 89, 89)
+                .addComponent(lblVat)
+                .addGap(89, 89, 89)
+                .addComponent(lblTotal)
+                .addGap(199, 199, 199))
+            .addGroup(layout.createSequentialGroup()
+                .addGap(53, 53, 53)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(btnRemove)
+                        .addGap(30, 30, 30)
+                        .addComponent(btnClear))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(txtScan, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(49, 49, 49)
+                        .addComponent(txtQty, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(btnAdd))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(btnPayCash)
+                            .addGap(81, 81, 81)
+                            .addComponent(btnFinish)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(btnCancel))
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -80,9 +122,23 @@ public class PosFrame extends javax.swing.JFrame {
                     .addComponent(txtScan, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(txtQty, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btnAdd))
-                .addGap(128, 128, 128)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(211, Short.MAX_VALUE))
+                .addGap(34, 34, 34)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblSubtotal)
+                    .addComponent(lblVat)
+                    .addComponent(lblTotal))
+                .addGap(33, 33, 33)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 118, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btnRemove)
+                    .addComponent(btnClear))
+                .addGap(93, 93, 93)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btnPayCash)
+                    .addComponent(btnFinish)
+                    .addComponent(btnCancel))
+                .addContainerGap(80, Short.MAX_VALUE))
         );
 
         pack();
@@ -115,7 +171,15 @@ public class PosFrame extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAdd;
+    private javax.swing.JButton btnCancel;
+    private javax.swing.JButton btnClear;
+    private javax.swing.JButton btnFinish;
+    private javax.swing.JButton btnPayCash;
+    private javax.swing.JButton btnRemove;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblSubtotal;
+    private javax.swing.JLabel lblTotal;
+    private javax.swing.JLabel lblVat;
     private javax.swing.JTable tblCart;
     private javax.swing.JTextField txtQty;
     private javax.swing.JTextField txtScan;
