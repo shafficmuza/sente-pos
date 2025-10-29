@@ -3,12 +3,25 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package com.promedia.sentepos.ui;
+import com.promedia.sentepos.dao.ProductDAO.ProductRow;
+import com.promedia.sentepos.model.Payment;
+import com.promedia.sentepos.model.Sale;
+import com.promedia.sentepos.model.SaleItem;
+import com.promedia.sentepos.service.PosService;
+
+import javax.swing.*;
+import java.sql.SQLException;
+
+
 
 /**
  *
  * @author shaffic
  */
 public class PosFrame extends javax.swing.JFrame {
+    
+    private CartTableModel cartModel = new CartTableModel();
+    private Sale currentSale = new Sale();
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(PosFrame.class.getName());
 
@@ -17,7 +30,116 @@ public class PosFrame extends javax.swing.JFrame {
      */
     public PosFrame() {
         initComponents();
+   
+        tblCart.setModel(cartModel);
+        txtQty.setText("1");
+        refreshTotals();
+        
+            }
+    /*
+        private void txtScanActionPerformed(java.awt.event.ActionEvent evt) { doAdd(); }
+        private void btnAddActionPerformed(java.awt.event.ActionEvent evt) { doAdd(); }
+        private void btnRemoveActionPerformed(java.awt.event.ActionEvent evt) { doRemoveSelected(); }
+        private void btnClearActionPerformed(java.awt.event.ActionEvent evt) { doClear(); }
+        private void btnPayCashActionPerformed(java.awt.event.ActionEvent evt) { doPayCash(); }
+        private void btnFinishActionPerformed(java.awt.event.ActionEvent evt) { doFinish(); }
+        private void btnCancelActionPerformed(java.awt.event.ActionEvent evt) { dispose(); }
+*/
+        
+    private void refreshTotals() {
+    double subtotal = cartModel.all().stream().mapToDouble(it -> it.lineTotal).sum();
+    double vat = cartModel.all().stream().mapToDouble(it -> it.vatAmount).sum();
+    double total = subtotal + vat;
+    lblSubtotal.setText(String.format("UGX %, .0f", subtotal));
+    lblVat.setText(String.format("UGX %, .0f", vat));
+    lblTotal.setText(String.format("UGX %, .0f", total));
+}
+
+private double parseQty() {
+    try {
+        double q = Double.parseDouble(txtQty.getText().trim());
+        if (q <= 0) throw new IllegalArgumentException();
+        return q;
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Quantity must be > 0");
+        txtQty.requestFocus();
+        throw new RuntimeException("invalid qty");
     }
+}
+
+private void doAdd() {
+    String code = txtScan.getText().trim();
+    if (code.isEmpty()) return;
+    double qty = parseQty();
+    try {
+        ProductRow p = PosService.lookupProduct(code);
+        if (p == null) {
+            JOptionPane.showMessageDialog(this, "Product not found: " + code);
+            return;
+        }
+        SaleItem it = PosService.makeItemFromProduct(p, qty);
+        cartModel.add(it);
+        txtScan.setText("");
+        txtScan.requestFocus();
+        refreshTotals();
+    } catch (SQLException ex) {
+        JOptionPane.showMessageDialog(this, "Lookup failed: " + ex.getMessage());
+    }
+}
+
+private void doRemoveSelected() {
+    int row = tblCart.getSelectedRow();
+    if (row < 0) { JOptionPane.showMessageDialog(this, "Select a row to remove."); return; }
+    int modelRow = tblCart.convertRowIndexToModel(row);
+    cartModel.removeAt(modelRow);
+    refreshTotals();
+}
+
+private void doClear() {
+    cartModel.clear();
+    refreshTotals();
+}
+
+private void doPayCash() {
+    double total = cartModel.all().stream().mapToDouble(it -> it.lineTotal + it.vatAmount).sum();
+    String s = JOptionPane.showInputDialog(this, "Cash received (UGX):", String.format("%.0f", total));
+    if (s == null) return;
+    try {
+        double paid = Double.parseDouble(s.trim());
+        if (paid < total) {
+            JOptionPane.showMessageDialog(this, "Amount is less than total.");
+            return;
+        }
+        currentSale.paid = paid; // store temporarily
+        JOptionPane.showMessageDialog(this, String.format("Change: UGX %, .0f", (paid - total)));
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Invalid amount.");
+    }
+}
+
+private void doFinish() {
+    if (cartModel.all().isEmpty()) { JOptionPane.showMessageDialog(this, "Cart is empty."); return; }
+
+    currentSale.items.clear();
+    currentSale.items.addAll(cartModel.all());
+
+    Payment p = new Payment();
+    p.method = Payment.Method.CASH;
+    p.amount = currentSale.paid > 0 ? currentSale.paid :
+        currentSale.items.stream().mapToDouble(it -> it.lineTotal + it.vatAmount).sum();
+
+    try {
+        long saleId = PosService.saveSale(currentSale, p);
+        JOptionPane.showMessageDialog(this, "Sale saved. ID = " + saleId);
+        // new sale
+        currentSale = new Sale();
+        cartModel.clear();
+        txtScan.requestFocus();
+        refreshTotals();
+    } catch (SQLException ex) {
+        JOptionPane.showMessageDialog(this, "Save failed: " + ex.getMessage());
+    }
+}
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -45,10 +167,20 @@ public class PosFrame extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         txtScan.setText("txtScan");
+        txtScan.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtScanActionPerformed(evt);
+            }
+        });
 
         txtQty.setText("txtQty");
 
         btnAdd.setText("btnAdd");
+        btnAdd.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAddActionPerformed(evt);
+            }
+        });
 
         tblCart.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -70,14 +202,39 @@ public class PosFrame extends javax.swing.JFrame {
         lblTotal.setText("lblTotal");
 
         btnRemove.setText("btnRemove");
+        btnRemove.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRemoveActionPerformed(evt);
+            }
+        });
 
         btnClear.setText("btnClear");
+        btnClear.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnClearActionPerformed(evt);
+            }
+        });
 
         btnPayCash.setText("btnPayCash");
+        btnPayCash.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnPayCashActionPerformed(evt);
+            }
+        });
 
         btnFinish.setText("btnFinish");
+        btnFinish.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnFinishActionPerformed(evt);
+            }
+        });
 
         btnCancel.setText("btnCancel");
+        btnCancel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCancelActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -143,6 +300,34 @@ public class PosFrame extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void txtScanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtScanActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtScanActionPerformed
+
+    private void btnAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnAddActionPerformed
+
+    private void btnRemoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnRemoveActionPerformed
+
+    private void btnClearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnClearActionPerformed
+
+    private void btnPayCashActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPayCashActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnPayCashActionPerformed
+
+    private void btnFinishActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFinishActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnFinishActionPerformed
+
+    private void btnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnCancelActionPerformed
 
     /**
      * @param args the command line arguments

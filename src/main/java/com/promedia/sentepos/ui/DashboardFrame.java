@@ -33,6 +33,14 @@ public class DashboardFrame extends JFrame {
             f.setLocationRelativeTo(this);
             f.setVisible(true);
         });
+        
+        JButton btnPOS = new JButton("Open POS");
+        btnPOS.addActionListener(e -> {
+            PosFrame pf = new PosFrame();
+            pf.setLocationRelativeTo(this);
+            pf.setVisible(true);
+        });
+        center.add(btnPOS);
 
         center.add(btnAddProduct);
         center.add(btnProducts);
