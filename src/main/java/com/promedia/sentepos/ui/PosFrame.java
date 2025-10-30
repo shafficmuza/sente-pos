@@ -156,7 +156,6 @@ private void doFinish() {
         btnRemove = new javax.swing.JButton();
         btnClear = new javax.swing.JButton();
         btnPayCash = new javax.swing.JButton();
-        btnFinish = new javax.swing.JButton();
         btnCancel = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
 
@@ -169,6 +168,11 @@ private void doFinish() {
         });
 
         txtQty.setText("Qty");
+        txtQty.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtQtyActionPerformed(evt);
+            }
+        });
 
         btnAdd.setText("Add");
         btnAdd.addActionListener(new java.awt.event.ActionListener() {
@@ -226,13 +230,6 @@ private void doFinish() {
             }
         });
 
-        btnFinish.setText("Finish");
-        btnFinish.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnFinishActionPerformed(evt);
-            }
-        });
-
         btnCancel.setBackground(new java.awt.Color(102, 102, 102));
         btnCancel.setForeground(new java.awt.Color(0, 0, 0));
         btnCancel.setText("Cancel");
@@ -280,9 +277,7 @@ private void doFinish() {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 19, Short.MAX_VALUE)
                                 .addComponent(btnCancel, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)))))
                 .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(btnPayCash, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnFinish, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(btnPayCash, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18))
         );
         layout.setVerticalGroup(
@@ -306,9 +301,7 @@ private void doFinish() {
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 337, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(168, 168, 168)
-                        .addComponent(btnPayCash, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(31, 31, 31)
-                        .addComponent(btnFinish, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(btnPayCash, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnRemove, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -322,6 +315,7 @@ private void doFinish() {
 
     private void txtScanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtScanActionPerformed
         // TODO add your handling code here:
+        doAdd();
     }//GEN-LAST:event_txtScanActionPerformed
 
     private void btnAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddActionPerformed
@@ -345,15 +339,15 @@ private void doFinish() {
         doPayCash();
     }//GEN-LAST:event_btnPayCashActionPerformed
 
-    private void btnFinishActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFinishActionPerformed
-        // TODO add your handling code here:
-        doFinish();
-    }//GEN-LAST:event_btnFinishActionPerformed
-
     private void btnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelActionPerformed
         // TODO add your handling code here:
         parseQty();
     }//GEN-LAST:event_btnCancelActionPerformed
+
+    private void txtQtyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtQtyActionPerformed
+        // TODO add your handling code here:
+        doAdd();
+    }//GEN-LAST:event_txtQtyActionPerformed
 
     /**
      * @param args the command line arguments
@@ -384,7 +378,6 @@ private void doFinish() {
     private javax.swing.JButton btnAdd;
     private javax.swing.JButton btnCancel;
     private javax.swing.JButton btnClear;
-    private javax.swing.JButton btnFinish;
     private javax.swing.JButton btnPayCash;
     private javax.swing.JButton btnRemove;
     private javax.swing.JLabel jLabel1;
