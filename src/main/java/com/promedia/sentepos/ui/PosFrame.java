@@ -34,7 +34,7 @@ public class PosFrame extends javax.swing.JFrame {
         tblCart.setModel(cartModel);
         txtQty.setText("1");
         refreshTotals();
-        btnFinish.setVisible(false);
+        
         
             }
     
