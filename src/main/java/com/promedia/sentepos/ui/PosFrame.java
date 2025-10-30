@@ -34,22 +34,10 @@ public class PosFrame extends javax.swing.JFrame {
         tblCart.setModel(cartModel);
         txtQty.setText("1");
         refreshTotals();
+        btnFinish.setVisible(false);
         
             }
     
-    
-    
-    
-    
-    /*
-        private void txtScanActionPerformed(java.awt.event.ActionEvent evt) { doAdd(); }
-        private void btnAddActionPerformed(java.awt.event.ActionEvent evt) { doAdd(); }
-        private void btnRemoveActionPerformed(java.awt.event.ActionEvent evt) { doRemoveSelected(); }
-        private void btnClearActionPerformed(java.awt.event.ActionEvent evt) { doClear(); }
-        private void btnPayCashActionPerformed(java.awt.event.ActionEvent evt) { doPayCash(); }
-        private void btnFinishActionPerformed(java.awt.event.ActionEvent evt) { doFinish(); }
-        private void btnCancelActionPerformed(java.awt.event.ActionEvent evt) { dispose(); }
-*/
         
     private void refreshTotals() {
     double subtotal = cartModel.all().stream().mapToDouble(it -> it.lineTotal).sum();
@@ -117,6 +105,8 @@ private void doPayCash() {
         }
         currentSale.paid = paid; // store temporarily
         JOptionPane.showMessageDialog(this, String.format("Change: UGX %, .0f", (paid - total)));
+        // Finish the transaction
+        doFinish();
     } catch (Exception e) {
         JOptionPane.showMessageDialog(this, "Invalid amount.");
     }
@@ -125,12 +115,12 @@ private void doPayCash() {
 private void doFinish() {
     if (cartModel.all().isEmpty()) { JOptionPane.showMessageDialog(this, "Cart is empty."); return; }
 
-    currentSale.items.clear();
-    currentSale.items.addAll(cartModel.all());
+        currentSale.items.clear();
+        currentSale.items.addAll(cartModel.all());
 
-    Payment p = new Payment();
-    p.method = Payment.Method.CASH;
-    p.amount = currentSale.paid > 0 ? currentSale.paid :
+        Payment p = new Payment();
+        p.method = Payment.Method.CASH;
+        p.amount = currentSale.paid > 0 ? currentSale.paid :
         currentSale.items.stream().mapToDouble(it -> it.lineTotal + it.vatAmount).sum();
 
     try {
@@ -170,7 +160,7 @@ private void doFinish() {
         btnCancel = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         txtScan.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -298,26 +288,28 @@ private void doFinish() {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtScan, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtQty, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnAdd, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(34, 34, 34)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblSubtotal)
-                    .addComponent(lblVat)
-                    .addComponent(lblTotal))
-                .addGap(33, 33, 33)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(btnPayCash, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap()
+                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtScan, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(txtQty, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(btnAdd, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(34, 34, 34)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lblSubtotal)
+                            .addComponent(lblVat)
+                            .addComponent(lblTotal))
+                        .addGap(33, 33, 33)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 337, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(168, 168, 168)
+                        .addComponent(btnPayCash, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(31, 31, 31)
-                        .addComponent(btnFinish, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 337, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btnFinish, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnRemove, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btnCancel, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
