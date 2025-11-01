@@ -25,6 +25,8 @@ public class LoginFrame extends JFrame {
         gc.gridx=1; gc.gridy=2; gc.anchor = GridBagConstraints.EAST; p.add(btnLogin, gc);
 
         btnLogin.addActionListener(e -> doLogin());
+        txtUser.addActionListener(e -> doLogin());
+        txtPass.addActionListener(e -> doLogin());
         setContentPane(p);
         pack();
     }

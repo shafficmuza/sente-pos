@@ -7,8 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProductTableModel extends AbstractTableModel {
+    // Added "Stock" and "Reorder"
     private final String[] cols = {
-        "ID","Name","SKU","Unit","Price","VAT Cat","VAT %","Service","Active"
+        "ID","Name","SKU","Unit","Price","VAT Cat","VAT %","Service","Active","Stock","Reorder"
     };
     private final List<ProductRow> rows = new ArrayList<>();
 
@@ -37,6 +38,8 @@ public class ProductTableModel extends AbstractTableModel {
             case 6 -> p.vatRate;
             case 7 -> p.isService==1 ? "Yes" : "No";
             case 8 -> p.active==1 ? "Yes" : "No";
+            case 9 -> p.stockQty;       // may be null for services
+            case 10 -> p.reorderLevel;  // may be null
             default -> "";
         };
     }
@@ -45,7 +48,7 @@ public class ProductTableModel extends AbstractTableModel {
     public Class<?> getColumnClass(int c) {
         return switch (c) {
             case 0 -> Long.class;
-            case 4,6 -> Double.class;
+            case 4,6,9,10 -> Double.class;
             default -> String.class;
         };
     }

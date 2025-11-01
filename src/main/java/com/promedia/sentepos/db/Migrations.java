@@ -73,6 +73,16 @@ final String payments =
   + " FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE"
   + ");";
 
+final String stockMoves =
+    "CREATE TABLE IF NOT EXISTS stock_moves ("
+  + " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+  + " product_id INTEGER NOT NULL,"
+  + " date_time TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+  + " qty_delta REAL NOT NULL,"       // -- +ve for add, -ve for remove
+  + " note TEXT,"
+  + " FOREIGN KEY (product_id) REFERENCES products(id)"
+  + ");";
+
 
         final String idxSku = "CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);";
         final String idxCommodity = "CREATE INDEX IF NOT EXISTS idx_products_commodity ON products(commodity_code);";
@@ -86,6 +96,7 @@ final String payments =
             st.execute(sales);
             st.execute(saleItems);
             st.execute(payments);
+            st.execute(stockMoves);
         } catch (SQLException e) {
             throw new RuntimeException("DB migration failed", e);
         }
