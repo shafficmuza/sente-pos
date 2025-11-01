@@ -7,7 +7,10 @@ import com.promedia.sentepos.dao.ProductDAO.ProductRow;
 import com.promedia.sentepos.model.Payment;
 import com.promedia.sentepos.model.Sale;
 import com.promedia.sentepos.model.SaleItem;
+import com.promedia.sentepos.print.ReceiptPrinter;
 import com.promedia.sentepos.service.PosService;
+import com.promedia.sentepos.service.FiscalService;
+import com.promedia.sentepos.dao.EfrisDAO;
 
 import javax.swing.*;
 import java.sql.SQLException;
@@ -113,27 +116,66 @@ private void doPayCash() {
 }
 
 private void doFinish() {
-    if (cartModel.all().isEmpty()) { JOptionPane.showMessageDialog(this, "Cart is empty."); return; }
+    if (cartModel.all().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Cart is empty.");
+        return;
+    }
 
-        currentSale.items.clear();
-        currentSale.items.addAll(cartModel.all());
+    // 1) Build sale from cart
+    currentSale.items.clear();
+    currentSale.items.addAll(cartModel.all());
 
-        Payment p = new Payment();
-        p.method = Payment.Method.CASH;
-        p.amount = currentSale.paid > 0 ? currentSale.paid :
-        currentSale.items.stream().mapToDouble(it -> it.lineTotal + it.vatAmount).sum();
+    Payment p = new Payment();
+    p.method = Payment.Method.CASH; // or selected method
+    p.amount = (currentSale.paid > 0)
+            ? currentSale.paid
+            : currentSale.items.stream().mapToDouble(it -> it.lineTotal + it.vatAmount).sum();
 
+    // 2) Save ONCE
+    final long saleId;
     try {
-        long saleId = PosService.saveSale(currentSale, p);
-        JOptionPane.showMessageDialog(this, "Sale saved. ID = " + saleId);
-        // new sale
-        currentSale = new Sale();
-        cartModel.clear();
-        txtScan.requestFocus();
-        refreshTotals();
+        saleId = PosService.saveSale(currentSale, p);
     } catch (SQLException ex) {
         JOptionPane.showMessageDialog(this, "Save failed: " + ex.getMessage());
+        return;
     }
+
+    // 3) Fiscalise (don’t block the sale if it fails)
+    try {
+        String irn = FiscalService.fiscalise(saleId, currentSale, p);
+        if (irn != null && !irn.isBlank()) {
+            System.out.println("Fiscalised IRN: " + irn);
+        }
+    } catch (Exception fx) {
+        JOptionPane.showMessageDialog(this,
+            "Sale saved, but fiscalisation did not complete.\n" +
+            "Reason: " + fx.getMessage() + "\nYou can retry from Sales List.");
+    }
+
+    // 4) Print PREVIEW (always show preview AFTER fiscalisation so QR/IRN can appear)
+    try {
+        ReceiptPrinter rp = ReceiptPrinter.usingBusinessFromDb(currentSale, p, saleId);
+        rp.preview(this); // modal dialog; user can zoom/inspect
+
+        // 5) Optional: print after preview
+        if (chkPrint.isSelected()) {
+            try {
+                rp.print(null); // or rp.print("EPSON")
+            } catch (java.awt.print.PrinterException pe) {
+                JOptionPane.showMessageDialog(this, "Print failed: " + pe.getMessage());
+            }
+        }
+    } catch (Exception anyPreviewIssue) {
+        // Preview should rarely fail, but don’t break the cashier flow
+        JOptionPane.showMessageDialog(this, "Preview unavailable: " + anyPreviewIssue.getMessage());
+    }
+
+    // 6) Notify + reset for next sale
+    JOptionPane.showMessageDialog(this, "Sale saved. ID = " + saleId);
+    currentSale = new Sale();
+    cartModel.clear();
+    txtScan.requestFocus();
+    refreshTotals();
 }
 
     /**
@@ -158,6 +200,7 @@ private void doFinish() {
         btnPayCash = new javax.swing.JButton();
         btnCancel = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
+        chkPrint = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -245,6 +288,10 @@ private void doFinish() {
         jLabel1.setForeground(new java.awt.Color(51, 153, 0));
         jLabel1.setText("SentePOS");
 
+        chkPrint.setFont(new java.awt.Font("Helvetica Neue", 0, 16)); // NOI18N
+        chkPrint.setSelected(true);
+        chkPrint.setText("Print Receipt");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -279,7 +326,9 @@ private void doFinish() {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 19, Short.MAX_VALUE)
                                 .addComponent(btnCancel, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)))))
                 .addGap(18, 18, 18)
-                .addComponent(btnPayCash, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(btnPayCash, javax.swing.GroupLayout.DEFAULT_SIZE, 140, Short.MAX_VALUE)
+                    .addComponent(chkPrint, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(18, 18, 18))
         );
         layout.setVerticalGroup(
@@ -303,7 +352,9 @@ private void doFinish() {
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 337, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(168, 168, 168)
-                        .addComponent(btnPayCash, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(btnPayCash, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(26, 26, 26)
+                        .addComponent(chkPrint)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnRemove, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -382,6 +433,7 @@ private void doFinish() {
     private javax.swing.JButton btnClear;
     private javax.swing.JButton btnPayCash;
     private javax.swing.JButton btnRemove;
+    private javax.swing.JCheckBox chkPrint;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblSubtotal;

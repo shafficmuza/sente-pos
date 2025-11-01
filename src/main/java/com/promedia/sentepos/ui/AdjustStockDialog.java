@@ -170,6 +170,11 @@ public class AdjustStockDialog extends javax.swing.JDialog {
         txtNote.setText("Note");
 
         btnFind.setText("Find");
+        btnFind.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnFindActionPerformed(evt);
+            }
+        });
 
         lblCurrent.setText("Current");
 
@@ -233,6 +238,10 @@ public class AdjustStockDialog extends javax.swing.JDialog {
     private void txtScanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtScanActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_txtScanActionPerformed
+
+    private void btnFindActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFindActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnFindActionPerformed
 
   
 

@@ -40,6 +40,17 @@ public class DashboardFrame extends JFrame {
             pf.setLocationRelativeTo(this);
             pf.setVisible(true);
         });
+        
+        // inside DashboardFrame after other buttons:
+        JButton btnBusinessSetup = new JButton("Business Setup");
+        btnBusinessSetup.addActionListener(e -> {
+            BusinessSetupFrame f = new BusinessSetupFrame();
+            f.setLocationRelativeTo(this);
+            f.setVisible(true);
+        });
+        center.add(btnBusinessSetup); // or wherever you keep your nav buttons
+
+        
         center.add(btnPOS);
 
         center.add(btnAddProduct);
