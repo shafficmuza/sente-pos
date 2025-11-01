@@ -167,15 +167,15 @@ public class AdjustStockDialog extends javax.swing.JDialog {
             }
         });
 
-        txtNote.setText("txtNote");
+        txtNote.setText("Note");
 
-        btnFind.setText("btnFind");
+        btnFind.setText("Find");
 
-        lblCurrent.setText("lblCurrent");
+        lblCurrent.setText("Current");
 
-        btnSave.setText("btnSave");
+        btnSave.setText("Save");
 
-        btnCancel.setText("btnCancel");
+        btnCancel.setText("Cancel");
 
         cmbMode.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Add", "Remove", "Set" }));
 
