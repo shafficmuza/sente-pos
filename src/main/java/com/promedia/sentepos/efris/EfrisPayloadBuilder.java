@@ -80,5 +80,60 @@ public class EfrisPayloadBuilder {
         return Json.stringify(root);
     }
 
+    // imports not required; pure String building
+
+private static String esc(String s) {
+    if (s == null) return "";
+    return s.replace("\\", "\\\\").replace("\"", "\\\"");
+}
+
+public static String buildCreditNotePayload(
+        long creditNoteId,
+        com.promedia.sentepos.dao.CreditNoteDAO.Head head,
+        java.util.List<com.promedia.sentepos.dao.CreditNoteDAO.Item> items
+) {
+    StringBuilder sb = new StringBuilder(512);
+    sb.append("{\"type\":\"CREDIT_NOTE\"");
+    sb.append(",\"creditNoteId\":").append(creditNoteId);
+    sb.append(",\"saleId\":").append(head != null ? head.sale_id : 0);
+    sb.append(",\"reason\":\"").append(esc(head != null ? head.reason : "")).append("\"");
+    sb.append(",\"totals\":{")
+      .append("\"subtotal\":").append(head != null ? head.subtotal : 0).append(',')
+      .append("\"vat\":").append(head != null ? head.vat_total : 0).append(',')
+      .append("\"total\":").append(head != null ? head.total : 0)
+      .append("}");
+    sb.append(",\"items\":[");
+    boolean first = true;
+    if (items != null) for (var it : items) {
+        if (!first) sb.append(',');
+        first = false;
+        sb.append('{')
+          .append("\"productId\":").append(it.product_id).append(',')
+          .append("\"itemName\":\"").append(esc(it.item_name)).append("\",")
+          .append("\"sku\":\"").append(esc(it.sku)).append("\",")
+          .append("\"qty\":").append(it.qty).append(',')
+          .append("\"unitPrice\":").append(it.unit_price).append(',')
+          .append("\"vatRate\":").append(it.vat_rate).append(',')
+          .append("\"lineTotal\":").append(it.line_total).append(',')
+          .append("\"vatAmount\":").append(it.vat_amount)
+          .append('}');
+    }
+    sb.append("]}");
+    return sb.toString();
+}
+
+public static String buildCreditNoteCancelPayload(
+        long creditNoteId,
+        com.promedia.sentepos.dao.CreditNoteDAO.Head head,
+        String reason
+) {
+    StringBuilder sb = new StringBuilder(256);
+    sb.append("{\"type\":\"CREDIT_NOTE_CANCEL\"");
+    sb.append(",\"creditNoteId\":").append(creditNoteId);
+    sb.append(",\"saleId\":").append(head != null ? head.sale_id : 0);
+    sb.append(",\"reason\":\"").append(esc(reason)).append("\"}");
+    return sb.toString();
+}
+    
     private static String n(String s){ return (s==null || s.isBlank()) ? null : s; }
 }

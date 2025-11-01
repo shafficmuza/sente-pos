@@ -48,6 +48,19 @@ public class DashboardFrame extends JFrame {
             f.setLocationRelativeTo(this);
             f.setVisible(true);
         });
+        
+        // Example: inside your dashboard init code (e.g., in SentePOS after building the JFrame)
+        JButton btnSales = new JButton("Sales");
+        btnSales.addActionListener(e -> {
+            Window owner = SwingUtilities.getWindowAncestor(btnSales);
+            JDialog dlg = new SalesListDialog(owner instanceof Frame ? (Frame) owner : null);
+            dlg.setLocationRelativeTo(owner);
+            dlg.setVisible(true);
+        });
+
+        // Add to whatever container you already have:
+        center.add(btnSales);
+
         center.add(btnBusinessSetup); // or wherever you keep your nav buttons
 
         

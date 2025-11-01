@@ -146,6 +146,58 @@ public final class Migrations {
           + " FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE"
           + ");";
         
+        // --- CREDIT NOTES (head) ---
+        final String creditNotes =
+            "CREATE TABLE IF NOT EXISTS credit_notes ("
+          + " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+          + " sale_id INTEGER NOT NULL,"                    /* reference original sale */
+          + " reason TEXT,"
+          + " date_time TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+          + " subtotal REAL NOT NULL,"
+          + " vat_total REAL NOT NULL,"
+          + " total REAL NOT NULL,"                         /* positive number; printer will display with minus sign */
+          + " status TEXT NOT NULL DEFAULT 'DRAFT',"        /* DRAFT | PENDING | SENT | FAILED | CANCELLED */
+          + " note TEXT,"
+          + " created_at TEXT DEFAULT (datetime('now')),"
+          + " FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE"
+          + ");";
+
+        final String creditNoteItems =
+            "CREATE TABLE IF NOT EXISTS credit_note_items ("
+          + " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+          + " credit_note_id INTEGER NOT NULL,"
+          + " product_id INTEGER NOT NULL,"
+          + " item_name TEXT NOT NULL,"
+          + " sku TEXT,"
+          + " qty REAL NOT NULL,"                           /* quantity being returned */
+          + " unit_price REAL NOT NULL,"
+          + " vat_rate REAL NOT NULL,"
+          + " line_total REAL NOT NULL,"                    /* qty * unit_price */
+          + " vat_amount REAL NOT NULL,"                    /* line_total * (vat_rate/100) */
+          + " FOREIGN KEY (credit_note_id) REFERENCES credit_notes(id) ON DELETE CASCADE,"
+          + " FOREIGN KEY (product_id) REFERENCES products(id)"
+          + ");";
+
+        /* EFRIS tracking for credit notes (separate table to avoid altering efris_invoices) */
+        final String efrisCreditNotes =
+            "CREATE TABLE IF NOT EXISTS efris_credit_notes ("
+          + " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+          + " credit_note_id INTEGER NOT NULL UNIQUE,"
+          + " status TEXT NOT NULL DEFAULT 'PENDING',"        /* PENDING | SENT | FAILED | CANCELLED */
+          + " request_json TEXT,"
+          + " response_json TEXT,"
+          + " invoice_number TEXT,"                           /* EFRIS CN number */
+          + " qr_base64 TEXT,"
+          + " verification_code TEXT,"
+          + " error_message TEXT,"
+          + " created_at TEXT DEFAULT (datetime('now')),"
+          + " sent_at TEXT,"
+          + " FOREIGN KEY (credit_note_id) REFERENCES credit_notes(id) ON DELETE CASCADE"
+          + ");";
+
+        final String idxCnSale = "CREATE INDEX IF NOT EXISTS idx_credit_notes_sale ON credit_notes(sale_id);";
+        final String idxCnStatus = "CREATE INDEX IF NOT EXISTS idx_efris_credit_notes_status ON efris_credit_notes(status);";
+        
         final String idxBusinessTin   = "CREATE INDEX IF NOT EXISTS idx_business_tin ON business(tin);";
         final String idxBusinessName  = "CREATE INDEX IF NOT EXISTS idx_business_name ON business(name);";
 
@@ -174,6 +226,12 @@ public final class Migrations {
             st.execute(seedBusiness);
             st.execute(efrisInvoices);
             st.execute(idxEfrisStatus);
+            st.execute(creditNotes);
+            st.execute(creditNoteItems);
+            st.execute(efrisCreditNotes);
+            st.execute(idxCnSale);
+            st.execute(idxCnStatus);
+            
         } catch (SQLException e) {
             throw new RuntimeException("DB migration failed", e);
         }

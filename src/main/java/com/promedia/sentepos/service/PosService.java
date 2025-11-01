@@ -1,5 +1,6 @@
 package com.promedia.sentepos.service;
 
+import com.promedia.sentepos.dao.CreditNoteDAO;
 import com.promedia.sentepos.dao.ProductDAO;
 import com.promedia.sentepos.dao.SaleDAO;
 import com.promedia.sentepos.dao.ProductDAO.ProductRow;
@@ -9,11 +10,16 @@ import com.promedia.sentepos.model.SaleItem;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class PosService {
+    
+    
     private PosService(){}
+    
+    
     private static final AtomicLong seq = new AtomicLong(System.currentTimeMillis());
 
     public static ProductRow lookupProduct(String codeOrName) throws SQLException {
@@ -66,4 +72,45 @@ public final class PosService {
         // Simple demo: SEN-<increasing number>. Replace with your own scheme.
         return "SEN-" + seq.incrementAndGet();
     }
+    
+     public static long issueCreditNote(
+            long saleId,
+            List<CreditNoteDAO.ItemLine> lines,
+            String reason,
+            String note,
+            double subtotal,   // not required by the core service; kept to match caller
+            double vat,        // "
+            double total       // "
+    ) throws Exception {
+
+   // Map UI ItemLine rows into DAO Items (compute line_total & vat_amount)
+List<CreditNoteDAO.Item> items = new ArrayList<>();
+if (lines != null) {
+    for (CreditNoteDAO.ItemLine ln : lines) {
+        CreditNoteDAO.Item it = new CreditNoteDAO.Item();
+        it.product_id = ln.product_id;
+        it.item_name  = ln.item_name;
+        it.sku        = ln.sku;
+
+        // core numeric fields coming from ItemLine
+        it.qty        = ln.qty;
+        it.unit_price = ln.unit_price;
+        it.vat_rate   = ln.vat_rate;
+
+        // compute totals (avoid referencing non-existent fields)
+        double line   = (it.qty) * (it.unit_price);
+        double vatAmt = line * (it.vat_rate / 100.0);
+
+        it.line_total = line;
+        it.vat_amount = vatAmt;
+
+        items.add(it);
+    }
+}
+
+        // Delegate to the core service (recomputes totals from items)
+        return CreditNoteService.issueCreditNote(saleId, items, reason, note);
+    }
+    
+    
 }
