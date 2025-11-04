@@ -17,4 +17,65 @@
         <maven.compiler.release>24</maven.compiler.release>
         <exec.mainClass>com.promedia.sentepos.SentePOS</exec.mainClass>
     </properties>
+    
+    <build>
+  <plugins>
+    <!-- Put Main-Class into MANIFEST.MF for the thin jar -->
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-jar-plugin</artifactId>
+      <version>3.4.1</version>
+      <configuration>
+        <archive>
+          <manifestEntries>
+            <Main-Class>com.promedia.sentepos.SentePOS</Main-Class>
+          </manifestEntries>
+        </archive>
+      </configuration>
+    </plugin>
+
+    <!-- Build a fat jar that includes sqlite-jdbc -->
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-shade-plugin</artifactId>
+      <version>3.5.3</version>
+      <executions>
+        <execution>
+          <phase>package</phase>
+          <goals><goal>shade</goal></goals>
+          <configuration>
+            <transformers>
+              <!-- Ensure Main-Class is also set in the shaded jar -->
+              <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                <mainClass>com.promedia.sentepos.SentePOS</mainClass>
+              </transformer>
+              <!-- Merge service files (helps JDBC drivers register cleanly) -->
+              <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+            </transformers>
+          </configuration>
+        </execution>
+      </executions>
+    </plugin>
+    
+    <plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-javadoc-plugin</artifactId>
+  <version>3.12.0</version>
+  <configuration>
+    <failOnError>false</failOnError>
+    <doclint>none</doclint>
+    <additionalJOptions>
+      <additionalJOption>-Xdoclint:none</additionalJOption>
+    </additionalJOptions>
+  </configuration>
+  <executions>
+    <execution>
+      <goals>
+        <goal>jar</goal>
+      </goals>
+    </execution>
+  </executions>
+</plugin>
+  </plugins>
+</build>
 </project>

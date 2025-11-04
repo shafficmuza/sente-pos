@@ -7,6 +7,7 @@ import com.promedia.sentepos.dao.StockDAO;
 import com.promedia.sentepos.efris.EfrisClient;
 import com.promedia.sentepos.efris.EfrisPayloadBuilder;
 import com.promedia.sentepos.model.Business;
+import com.promedia.sentepos.util.AppLog;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -51,9 +52,21 @@ public final class CreditNoteService {
         String pass   = b.efrisPassword;   // ✅ camelCase
         String device = b.efrisDeviceNo;   // ✅ camelCase
 
+        // before sending: logging
+AppLog.line("efris", "CN#" + creditNoteId + " building payload");
+var reqPath = AppLog.blob("efris", "cn-" + creditNoteId, "request", payload);
+
         // Reuse invoice sender for CN to avoid missing overloads
         EfrisClient client = new EfrisClient();
         EfrisClient.Result r = client.sendInvoiceJson(payload, endpoint, user, pass, device);
+        
+        // after response: logging
+AppLog.blob("efris", "cn-" + creditNoteId, "response", r.rawResponse);
+if (r.ok) {
+    AppLog.ok("efris", "cn-" + creditNoteId, "SENT FDN=" + r.invoiceNumber);
+} else {
+    AppLog.err("efris", "cn-" + creditNoteId, "FAILED " + r.error);
+}
 
         if (r.ok) {
             CreditNoteDAO.setStatus(creditNoteId, "SENT");
@@ -63,6 +76,8 @@ public final class CreditNoteService {
             CreditNoteDAO.setStatus(creditNoteId, "FAILED");
             throw new RuntimeException("Credit note fiscalisation failed: " + r.error);
         }
+        
+        
     }
 
     /** Cancel/void a credit note on EFRIS (and locally). */

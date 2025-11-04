@@ -6,6 +6,18 @@ import java.sql.Statement;
 
 public final class Migrations {
     private Migrations(){}
+    
+    private static void addColumnIfMissing(Connection c, String table, String column, String type) throws SQLException {
+    try (var rs = c.createStatement().executeQuery("PRAGMA table_info(" + table + ")")) {
+        boolean exists = false;
+        while (rs.next()) {
+            if (column.equalsIgnoreCase(rs.getString("name"))) { exists = true; break; }
+        }
+        if (!exists) {
+            c.createStatement().execute("ALTER TABLE " + table + " ADD COLUMN " + column + " " + type);
+        }
+    }
+}
 
     public static void ensure() {
         // --- PRODUCTS ---
@@ -135,17 +147,18 @@ public final class Migrations {
             "CREATE TABLE IF NOT EXISTS efris_invoices ("
           + " id INTEGER PRIMARY KEY AUTOINCREMENT,"
           + " sale_id INTEGER NOT NULL UNIQUE,"
-          + " status TEXT NOT NULL DEFAULT 'PENDING',"      // -- PENDING | SENT | FAILED
-          + " request_json TEXT,"                           //  -- payload we sent
-          + " response_json TEXT,"                         //   -- raw response
-          + " invoice_number TEXT,"                        //   -- e.g., IRN / invoiceNo from EFRIS
-          + " qr_base64 TEXT,"                             //   -- base64 image if returned
+          + " status TEXT NOT NULL DEFAULT 'PENDING',"
+          + " request_json  TEXT,"
+          + " response_json TEXT,"
+          + " invoice_number TEXT,"
+          + " qr_base64 TEXT,"
+          + " verification_code TEXT,"   // <— NEW here for fresh DBs
           + " error_message TEXT,"
           + " created_at TEXT DEFAULT (datetime('now')),"
-          + " sent_at TEXT,"
+          + " sent_at    TEXT,"
           + " FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE"
           + ");";
-        
+
         // --- CREDIT NOTES (head) ---
         final String creditNotes =
             "CREATE TABLE IF NOT EXISTS credit_notes ("
@@ -231,6 +244,9 @@ public final class Migrations {
             st.execute(efrisCreditNotes);
             st.execute(idxCnSale);
             st.execute(idxCnStatus);
+            
+            // Backfill missing columns for existing installs (safe no-op on fresh DBs)
+            addColumnIfMissing(c, "efris_invoices", "verification_code", "TEXT");
             
         } catch (SQLException e) {
             throw new RuntimeException("DB migration failed", e);

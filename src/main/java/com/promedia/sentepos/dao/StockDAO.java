@@ -9,24 +9,34 @@ import java.sql.SQLException;
 public final class StockDAO {
     private StockDAO(){}
 
-    /** Increment (or decrement if negative) product stock and record a movement. */
+    /** Transaction-aware adjust. Uses the provided Connection (does NOT commit/rollback). */
+    public static void adjust(Connection c, long productId, double qtyDelta, String note) throws SQLException {
+        // Only affect goods, not services
+        try (PreparedStatement ps = c.prepareStatement(
+                "UPDATE products " +
+                "SET stock_qty = COALESCE(stock_qty,0) + ? " +
+                "WHERE id=? AND COALESCE(is_service,0)=0")) {
+            ps.setDouble(1, qtyDelta);
+            ps.setLong(2, productId);
+            ps.executeUpdate();  // if product is service, this will update 0 rows (expected)
+        }
+
+        // Always log a move for auditability
+        try (PreparedStatement ps = c.prepareStatement(
+                "INSERT INTO stock_moves (product_id, qty_delta, note) VALUES (?,?,?)")) {
+            ps.setLong(1, productId);
+            ps.setDouble(2, qtyDelta);
+            ps.setString(3, note);
+            ps.executeUpdate();
+        }
+    }
+
+    /** Standalone adjust (opens/commits its own transaction). */
     public static void adjust(long productId, double qtyDelta, String note) throws SQLException {
         try (Connection c = Db.get()) {
             c.setAutoCommit(false);
             try {
-                try (PreparedStatement ps = c.prepareStatement(
-                        "UPDATE products SET stock_qty = COALESCE(stock_qty,0) + ? WHERE id=? AND is_service=0")) {
-                    ps.setDouble(1, qtyDelta);
-                    ps.setLong(2, productId);
-                    ps.executeUpdate();
-                }
-                try (PreparedStatement ps = c.prepareStatement(
-                        "INSERT INTO stock_moves (product_id, qty_delta, note) VALUES (?,?,?)")) {
-                    ps.setLong(1, productId);
-                    ps.setDouble(2, qtyDelta);
-                    ps.setString(3, note);
-                    ps.executeUpdate();
-                }
+                adjust(c, productId, qtyDelta, note);
                 c.commit();
             } catch (SQLException e) {
                 try { c.rollback(); } catch (Exception ignore) {}
@@ -51,12 +61,14 @@ public final class StockDAO {
                 }
                 double delta = newQty - current;
 
-                try (var ps = c.prepareStatement("UPDATE products SET stock_qty=? WHERE id=? AND is_service=0")) {
+                try (var ps = c.prepareStatement(
+                        "UPDATE products SET stock_qty=? WHERE id=? AND COALESCE(is_service,0)=0")) {
                     ps.setDouble(1, newQty);
                     ps.setLong(2, productId);
                     ps.executeUpdate();
                 }
-                try (var ps = c.prepareStatement("INSERT INTO stock_moves (product_id, qty_delta, note) VALUES (?,?,?)")) {
+                try (var ps = c.prepareStatement(
+                        "INSERT INTO stock_moves (product_id, qty_delta, note) VALUES (?,?,?)")) {
                     ps.setLong(1, productId);
                     ps.setDouble(2, delta);
                     ps.setString(3, note);
