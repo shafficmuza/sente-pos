@@ -1,12 +1,15 @@
 package com.promedia.sentepos.service;
 
 import com.promedia.sentepos.dao.CreditNoteDAO;
+import com.promedia.sentepos.dao.EfrisDAO;
 import com.promedia.sentepos.dao.ProductDAO;
 import com.promedia.sentepos.dao.SaleDAO;
 import com.promedia.sentepos.dao.ProductDAO.ProductRow;
 import com.promedia.sentepos.model.Payment;
 import com.promedia.sentepos.model.Sale;
 import com.promedia.sentepos.model.SaleItem;
+import com.promedia.sentepos.util.AppLog;
+import static com.promedia.sentepos.util.AppLog.line;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -54,6 +57,8 @@ public final class PosService {
             throw ex;
         }
     }
+    
+    
 
     public static SaleItem makeItemFromProduct(ProductRow p, double qty) {
         SaleItem it = new SaleItem();
@@ -111,6 +116,25 @@ if (lines != null) {
         // Delegate to the core service (recomputes totals from items)
         return CreditNoteService.issueCreditNote(saleId, items, reason, note);
     }
+     
+    
+     
+    public static void retryFiscalise(long saleId) throws Exception {
+    // Minimal JSON marker so we have a request body recorded
+    String payload = "{\"type\":\"RETRY\",\"entity\":\"SALE\",\"saleId\":" + saleId + "}";
+
+    // Persist payload in DB (creates/updates efris_invoices row to PENDING)
+    // NOTE: If your EfrisDAO uses a slightly different name (e.g. upsertPendingSale),
+    // adjust the method call below to match your project.
+    EfrisDAO.upsertPending(saleId, payload);
+
+    // Also drop a file in Logs/Payloads for audit
+    AppLog.ensurePayloadsFolder(); // no-op if you already call this elsewhere
+    AppLog.blobInPayloads("sale-" + saleId, "retry-request", payload);
+
+    // Optional: log a one-liner
+    AppLog.ok("efris", "sale-" + saleId, "queued retry for fiscalisation (status=PENDING)");
+}
     
     
 }

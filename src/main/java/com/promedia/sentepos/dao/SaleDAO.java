@@ -120,7 +120,7 @@ public final class SaleDAO {
         public String note;
     }
 
-    /** Aggregate bundle for preview/print/fiscalise (sale items + best payment). */
+    //** Aggregate bundle for preview/print/fiscalise (sale items + best payment). */
     public static final class Aggregate {
         public Sale sale;       // with items
         public Payment payment; // chosen payment or fallback CASH

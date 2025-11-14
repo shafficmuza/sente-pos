@@ -11,7 +11,7 @@ import java.lang.reflect.Method;
 
 public class FiscalService {
 
-    private static final String DEFAULT_ENDPOINT = "https://efris.example/submitInvoice"; // TODO: real URA URL
+    private static final String DEFAULT_ENDPOINT = "http://127.0.0.1:9880/efristcs/ws/tcsapp/getInformation"; // TODO: real URA URL
 
     /** Build payload → save PENDING → send → mark SENT/FAILED. Returns invoice number on success. */
     public static String fiscalise(long saleId, Sale sale, Payment payment) throws Exception {

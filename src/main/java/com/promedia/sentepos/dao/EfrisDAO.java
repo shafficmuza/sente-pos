@@ -21,7 +21,7 @@ public final class EfrisDAO {
         public String sent_at;
     }
 
-    /** Upsert PENDING row before hitting EFRIS. */
+    //** Upsert PENDING row before hitting EFRIS. */
     public static void upsertPending(long saleId, String requestJson) throws SQLException {
         try (Connection c = Db.get()) {
             // Try insert; if exists, update.

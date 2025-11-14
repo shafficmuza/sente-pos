@@ -57,6 +57,16 @@ public class DashboardFrame extends JFrame {
             dlg.setLocationRelativeTo(owner);
             dlg.setVisible(true);
         });
+        
+        JButton btnFiscal = new JButton("Sales Fiscalisation");
+        btnFiscal.addActionListener(e -> {
+            // open as a dialog
+            SalesFiscalisationDialog.open(this);
+
+            // or embed as a tab:
+            // yourTabbedPane.addTab("Fiscalisation", new SalesFiscalisationPanel());
+        });
+        center.add(btnFiscal);
 
         // Add to whatever container you already have:
         center.add(btnSales);

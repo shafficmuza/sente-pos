@@ -15,8 +15,8 @@ import java.util.List;
 public final class CreditNoteService {
     private CreditNoteService(){}
 
-    private static final String CN_ENDPOINT    = "https://efris.example/submitCreditNote";   // TODO: real endpoint
-    private static final String CN_CANCEL_EP   = "https://efris.example/cancelCreditNote";   // TODO: real endpoint
+    private static final String CN_ENDPOINT    = "http://127.0.0.1:9880/efristcs/ws/tcsapp/getInformation";   // TODO: real endpoint
+    private static final String CN_CANCEL_EP   = "http://127.0.0.1:9880/efristcs/ws/tcsapp/getInformation";   // TODO: real endpoint
 
     /** Build + save a credit note for selected items (partial or full), adjust stock (+qty back). */
     public static long issueCreditNote(long saleId, List<Item> items, String reason, String note) throws SQLException {
@@ -61,12 +61,12 @@ var reqPath = AppLog.blob("efris", "cn-" + creditNoteId, "request", payload);
         EfrisClient.Result r = client.sendInvoiceJson(payload, endpoint, user, pass, device);
         
         // after response: logging
-AppLog.blob("efris", "cn-" + creditNoteId, "response", r.rawResponse);
-if (r.ok) {
-    AppLog.ok("efris", "cn-" + creditNoteId, "SENT FDN=" + r.invoiceNumber);
-} else {
-    AppLog.err("efris", "cn-" + creditNoteId, "FAILED " + r.error);
-}
+        AppLog.blob("efris", "cn-" + creditNoteId, "response", r.rawResponse);
+        if (r.ok) {
+            AppLog.ok("efris", "cn-" + creditNoteId, "SENT FDN=" + r.invoiceNumber);
+        } else {
+            AppLog.err("efris", "cn-" + creditNoteId, "FAILED " + r.error);
+        }
 
         if (r.ok) {
             CreditNoteDAO.setStatus(creditNoteId, "SENT");
@@ -94,9 +94,9 @@ if (r.ok) {
         String payload = EfrisPayloadBuilder.buildCreditNoteCancelPayload(creditNoteId, head, reason);
 
         String endpoint = CN_CANCEL_EP;
-        String user   = b.efrisUsername;   // ✅
-        String pass   = b.efrisPassword;   // ✅
-        String device = b.efrisDeviceNo;   // ✅
+        String user   = b.efrisUsername;
+        String pass   = b.efrisPassword;
+        String device = b.efrisDeviceNo;
 
         EfrisClient client = new EfrisClient();
         // Reuse same sender to avoid missing overloads; change to sendCreditNoteCancelJson if you implement it
