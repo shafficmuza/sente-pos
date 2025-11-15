@@ -72,6 +72,7 @@ public final class EfrisClient {
                                   String username,
                                   String password,
                                   String deviceNo) throws Exception {
+        // SALE invoice upload = T109
         return sendToEnabler(innerInvoiceJson, "T109", "SALE", deviceNo);
     }
 
@@ -84,7 +85,8 @@ public final class EfrisClient {
                                      String username,
                                      String password,
                                      String deviceNo) throws Exception {
-        return sendToEnabler(innerCreditNoteJson, "T109", "CREDIT_NOTE", deviceNo);
+        // Credit note upload = T110
+        return sendToEnabler(innerCreditNoteJson, "T110", "CREDIT_NOTE", deviceNo);
     }
 
     /**
@@ -97,7 +99,8 @@ public final class EfrisClient {
                                            String username,
                                            String password,
                                            String deviceNo) throws Exception {
-        return sendToEnabler(innerCancelJson, "T109", "CREDIT_NOTE_CANCEL", deviceNo);
+        // Credit note cancellation = T111
+        return sendToEnabler(innerCancelJson, "T111", "CREDIT_NOTE_CANCEL", deviceNo);
     }
 
     // ---------------------------------------------------------------------

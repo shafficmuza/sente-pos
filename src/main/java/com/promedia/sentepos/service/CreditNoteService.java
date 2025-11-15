@@ -44,43 +44,33 @@ public final class CreditNoteService {
         Business b = BusinessDAO.loadSingle();
         if (b == null) throw new IllegalStateException("Business not configured.");
 
-        // Build payload (you provide implementation in EfrisPayloadBuilder)
+        // Build payload for credit note (inner JSON)
         String payload = EfrisPayloadBuilder.buildCreditNotePayload(creditNoteId, head, items);
 
         String endpoint = CN_ENDPOINT;
-        String user   = b.efrisUsername;   // ✅ camelCase
-        String pass   = b.efrisPassword;   // ✅ camelCase
-        String device = b.efrisDeviceNo;   // ✅ camelCase
+        String user   = b.efrisUsername;
+        String pass   = b.efrisPassword;
+        String device = b.efrisDeviceNo;
 
-        // before sending: logging
-AppLog.line("efris", "CN#" + creditNoteId + " building payload");
-var reqPath = AppLog.blob("efris", "cn-" + creditNoteId, "request", payload);
+        AppLog.line("efris", "CN#" + creditNoteId + " building payload");
+        AppLog.blob("efris", "cn-" + creditNoteId, "request", payload);
 
-        // Reuse invoice sender for CN to avoid missing overloads
         EfrisClient client = new EfrisClient();
-        EfrisClient.Result r = client.sendInvoiceJson(payload, endpoint, user, pass, device);
-        
-        // after response: logging
+        // 🔽 use credit-note variant (T110)
+        EfrisClient.Result r = client.sendCreditNoteJson(payload, endpoint, user, pass, device);
+
         AppLog.blob("efris", "cn-" + creditNoteId, "response", r.rawResponse);
         if (r.ok) {
             AppLog.ok("efris", "cn-" + creditNoteId, "SENT FDN=" + r.invoiceNumber);
+            CreditNoteDAO.setStatus(creditNoteId, "SENT");
+            return r.invoiceNumber;
         } else {
             AppLog.err("efris", "cn-" + creditNoteId, "FAILED " + r.error);
-        }
-
-        if (r.ok) {
-            CreditNoteDAO.setStatus(creditNoteId, "SENT");
-            // If you later want to persist response/qr/verification: add methods in EfrisDAO and call them here.
-            return r.invoiceNumber; // may be null depending on EFRIS response
-        } else {
             CreditNoteDAO.setStatus(creditNoteId, "FAILED");
             throw new RuntimeException("Credit note fiscalisation failed: " + r.error);
         }
-        
-        
     }
-
-    /** Cancel/void a credit note on EFRIS (and locally). */
+   /** Cancel/void a credit note on EFRIS (and locally). */
     public static void cancelCreditNote(long creditNoteId, String reason) throws Exception {
         var head = CreditNoteDAO.findHead(creditNoteId);
         if (head == null) throw new IllegalStateException("Credit note not found.");
@@ -99,15 +89,11 @@ var reqPath = AppLog.blob("efris", "cn-" + creditNoteId, "request", payload);
         String device = b.efrisDeviceNo;
 
         EfrisClient client = new EfrisClient();
-        // Reuse same sender to avoid missing overloads; change to sendCreditNoteCancelJson if you implement it
-        EfrisClient.Result r = client.sendInvoiceJson(payload, endpoint, user, pass, device);
+        // 🔽 use cancel variant (T111)
+        EfrisClient.Result r = client.sendCreditNoteCancelJson(payload, endpoint, user, pass, device);
 
         if (r.ok) {
             CreditNoteDAO.setStatus(creditNoteId, "CANCELLED");
-            // If you reversed stock on issue and business rules require undoing that on cancel,
-            // uncomment the following:
-            // var items = CreditNoteDAO.listItems(creditNoteId);
-            // for (var it : items) StockDAO.adjust(it.product_id, -it.qty, "CN Cancel #" + creditNoteId);
         } else {
             throw new RuntimeException("Cancel failed: " + r.error);
         }
