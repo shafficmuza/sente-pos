@@ -177,9 +177,9 @@ doLogin();        // TODO add your handling code here:
         String p = new String(txtPass.getPassword());
         if ("admin".equals(u) && "1234".equals(p)) {
             JOptionPane.showMessageDialog(this, "Login OK");
-            DashboardFrame df = new DashboardFrame(u);
-            df.setLocationRelativeTo(this);
-            df.setVisible(true);
+            Dashboard d = new Dashboard(u);
+            d.setLocationRelativeTo(this);
+            d.setVisible(true);
             dispose();
         } else {
             JOptionPane.showMessageDialog(this, "Invalid credentials");
