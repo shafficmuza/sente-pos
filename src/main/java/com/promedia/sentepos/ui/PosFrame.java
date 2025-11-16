@@ -209,19 +209,23 @@ private void doFinish() {
         setTitle("POS Screen");
         setBackground(new java.awt.Color(204, 255, 255));
 
+        txtScan.setFont(new java.awt.Font("sansserif", 0, 18)); // NOI18N
         txtScan.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 txtScanActionPerformed(evt);
             }
         });
 
-        txtQty.setText("Qty");
+        txtQty.setFont(new java.awt.Font("sansserif", 0, 18)); // NOI18N
+        txtQty.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        txtQty.setText("0");
         txtQty.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 txtQtyActionPerformed(evt);
             }
         });
 
+        btnAdd.setFont(new java.awt.Font("sansserif", 0, 18)); // NOI18N
         btnAdd.setText("Add");
         btnAdd.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -229,6 +233,7 @@ private void doFinish() {
             }
         });
 
+        tblCart.setFont(new java.awt.Font("sansserif", 0, 16)); // NOI18N
         tblCart.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
@@ -252,9 +257,10 @@ private void doFinish() {
         lblTotal.setText("lblTotal");
 
         btnRemove.setBackground(new java.awt.Color(255, 51, 51));
-        btnRemove.setFont(new java.awt.Font("Helvetica Neue", 1, 13)); // NOI18N
+        btnRemove.setFont(new java.awt.Font("Helvetica Neue", 1, 18)); // NOI18N
         btnRemove.setForeground(new java.awt.Color(0, 0, 0));
         btnRemove.setText("Remove");
+        btnRemove.setOpaque(true);
         btnRemove.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnRemoveActionPerformed(evt);
@@ -262,16 +268,17 @@ private void doFinish() {
         });
 
         btnClear.setBackground(new java.awt.Color(255, 204, 0));
-        btnClear.setFont(new java.awt.Font("Helvetica Neue", 1, 13)); // NOI18N
+        btnClear.setFont(new java.awt.Font("Helvetica Neue", 1, 18)); // NOI18N
         btnClear.setForeground(new java.awt.Color(0, 0, 0));
         btnClear.setText("Clear");
+        btnClear.setOpaque(true);
         btnClear.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnClearActionPerformed(evt);
             }
         });
 
-        btnPayCash.setFont(new java.awt.Font("Helvetica Neue", 1, 13)); // NOI18N
+        btnPayCash.setFont(new java.awt.Font("Helvetica Neue", 1, 18)); // NOI18N
         btnPayCash.setForeground(new java.awt.Color(51, 153, 0));
         btnPayCash.setText("Pay Cash");
         btnPayCash.addActionListener(new java.awt.event.ActionListener() {
@@ -281,8 +288,10 @@ private void doFinish() {
         });
 
         btnCancel.setBackground(new java.awt.Color(102, 102, 102));
+        btnCancel.setFont(new java.awt.Font("sansserif", 0, 18)); // NOI18N
         btnCancel.setForeground(new java.awt.Color(0, 0, 0));
         btnCancel.setText("Cancel");
+        btnCancel.setOpaque(true);
         btnCancel.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnCancelActionPerformed(evt);
@@ -331,9 +340,9 @@ private void doFinish() {
                                 .addGap(18, 18, 18)
                                 .addComponent(btnAdd, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE)))))
                 .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(btnPayCash, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(chkPrint, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(chkPrint, javax.swing.GroupLayout.PREFERRED_SIZE, 213, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnPayCash, javax.swing.GroupLayout.PREFERRED_SIZE, 191, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -352,14 +361,14 @@ private void doFinish() {
                             .addComponent(lblSubtotal)
                             .addComponent(lblVat)
                             .addComponent(lblTotal))
-                        .addGap(33, 33, 33)
+                        .addGap(30, 30, 30)
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 337, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(168, 168, 168)
                         .addComponent(btnPayCash, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(26, 26, 26)
                         .addComponent(chkPrint)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 28, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnRemove, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btnCancel, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)

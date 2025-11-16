@@ -52,7 +52,6 @@ public class Dashboard extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("SentePOS — Dashboard");
-        setBackground(new java.awt.Color(102, 0, 204));
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         setResizable(false);
 
@@ -123,6 +122,7 @@ public class Dashboard extends javax.swing.JFrame {
         userLabel.setText("Users");
         userLabel.setOpaque(true);
 
+        usernameLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         usernameLabel.setText("jLabel1");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());

@@ -21,161 +21,134 @@ public class EfrisPayloadBuilder {
      */
     // inside com.promedia.sentepos.efris.EfrisPayloadBuilder
 
+// Build a proper T109 invoice payload for OFFLINE TCS
 public static String buildInvoicePayload(long saleId, Sale sale, Payment payment) throws Exception {
     Business b = BusinessDAO.loadSingle();
     if (b == null) {
         throw new IllegalStateException("Business not configured.");
     }
 
-    // --- basic totals from sale items ---
-    double net = 0.0;
-    double vat = 0.0;
+    // Basic totals from sale items
+    double subtotal = 0.0;
+    double vatTotal = 0.0;
     for (SaleItem it : sale.items) {
-        net += it.lineTotal;  // amount before VAT
-        vat += it.vatAmount;  // VAT amount
+        subtotal += it.lineTotal;
+        vatTotal += it.vatAmount;
     }
-    double gross = net + vat;
+    double total = subtotal + vatTotal;
 
-    // invoice number & date – you can swap to your own receiptNo if you prefer
-    String invoiceNo  = "INV" + saleId;
-    String issuedDate = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-            .format(new java.util.Date());
+    String invoiceNo   = "INV-" + saleId;  // you can later switch to your receipt number
+    String issuedDate  = java.time.LocalDateTime.now()
+            .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+    String referenceNo = "POS-" + saleId;
 
-    // payWay code mapping (adjust to your EFRIS code table if needed)
-    String payWay = mapPayWay(payment);
+    Map<String, Object> root = new HashMap<>();
 
-    StringBuilder sb = new StringBuilder(2048);
-    sb.append('{');
+    // ---------------- sellerDetails ----------------
+    Map<String, Object> seller = new HashMap<>();
+    seller.put("tin", nz(b.tin));
+    seller.put("ninBrn", nz(b.branchCode));                     // BRN / branch id
+    seller.put("legalName", nz(b.name));                        // legal name
+    seller.put("businessName", nz(b.name));                     // trade name (same for now)
+    seller.put("address", nz(b.addressLine));                   // physical address
+    seller.put("mobilePhone", nz(b.phone));                     // mobile
+    seller.put("linePhone", nz(b.phone));                       // landline (reuse for now)
+    seller.put("emailAddress", nz(b.email));
+    seller.put("placeOfBusiness", nz(b.city, "Kampala"));
+    seller.put("referenceNo", referenceNo);
+    root.put("sellerDetails", seller);
 
-    // =========================================================
-    // sellerDetails  (T109 spec – this is what error 2067 wants)
-    // =========================================================
-    sb.append("\"sellerDetails\":{");
-    sb.append("\"tin\":\"").append(esc(nz(b.tin))).append("\",");
-    sb.append("\"ninBrn\":\"").append(esc(nz(b.branchCode, b.efrisBranchId))).append("\",");
-    sb.append("\"legalName\":\"").append(esc(nz(b.name, "UNKNOWN"))).append("\",");
-    sb.append("\"businessName\":\"").append(esc(nz(b.name, "UNKNOWN"))).append("\",");
-    sb.append("\"address\":\"").append(esc(nz(b.addressLine, "Kampala, Uganda"))).append("\",");
-    sb.append("\"mobilePhone\":\"").append(esc(nz(b.phone, ""))).append("\",");
-    sb.append("\"linePhone\":\"").append(esc(nz(b.phone, ""))).append("\",");
-    sb.append("\"emailAddress\":\"").append(esc(nz(b.email, ""))).append("\",");
-    sb.append("\"placeOfBusiness\":\"").append(esc(nz(b.city, "Kampala"))).append("\",");
-    sb.append("\"referenceNo\":\"").append(esc(invoiceNo)).append("\"");
-    sb.append("},");
+    // ---------------- basicInformation ----------------
+    Map<String, Object> basic = new HashMap<>();
+    basic.put("invoiceNo", invoiceNo);
+    basic.put("antifakeCode", "");                              // filled by EFRIS in response
+    basic.put("deviceNo", nz(b.efrisDeviceNo));
+    basic.put("issuedDate", issuedDate);
+    basic.put("operator", nz(b.efrisUsername, "admin"));
+    basic.put("currency", nz(b.currency, "UGX"));
+    basic.put("invoiceType", "1");                              // 1 = standard invoice
+    basic.put("invoiceKind", "2");                              // 1 = normal invoice 2 = Receipt
+    basic.put("dataSource", "103");                             // 103 = POS (per spec)
+    basic.put("oriInvoiceId", "");                              // not a credit-note here
+    basic.put("payWay", mapPayWay(payment));                    // maps CASH/CARD/MOBILE → code
+    root.put("basicInformation", basic);
 
-    // =========================================================
-    // basicInformation
-    // =========================================================
-    sb.append("\"basicInformation\":{");
-    sb.append("\"invoiceNo\":\"").append(esc(invoiceNo)).append("\",");
-    sb.append("\"antifakeCode\":\"\",");
-    sb.append("\"deviceNo\":\"").append(esc(nz(b.efrisDeviceNo, "TCS-UNKNOWN"))).append("\",");
-    sb.append("\"issuedDate\":\"").append(esc(issuedDate)).append("\",");
-    sb.append("\"operator\":\"").append(esc(nz(b.efrisUsername, "admin"))).append("\",");
-    sb.append("\"currency\":\"UGX\",");
-    sb.append("\"invoiceType\":\"1\",");      // 1 = standard invoice (check your spec)
-    sb.append("\"invoiceKind\":\"1\",");
-    sb.append("\"dataSource\":\"103\",");     // 103 = POS (from URA docs)
-    sb.append("\"oriInvoiceId\":\"\",");
-    sb.append("\"payWay\":\"").append(esc(payWay)).append("\"");
-    sb.append("},");
+    // ---------------- buyerDetails ----------------
+    Map<String, Object> buyer = new HashMap<>();
+    buyer.put("buyerTin", "");
+    buyer.put("buyerNinBrn", "");
+    buyer.put("buyerPassportNum", "");
+    buyer.put("buyerLegalName", "WALK-IN CUSTOMER");
+    buyer.put("buyerBusinessName", "");
+    buyer.put("buyerAddress", "");
+    buyer.put("buyerEmail", "");
+    buyer.put("buyerMobilePhone", "");
+    buyer.put("buyerLinePhone", "");
+    buyer.put("buyerPlaceOfBusi", "");
+    buyer.put("buyerType", "1");
+    buyer.put("buyerCitizenship", "");
+    buyer.put("buyerSector", "");
+    buyer.put("buyerReferenceNo", "");
+    root.put("buyerDetails", buyer);
 
-    // =========================================================
-    // buyerDetails  (we use WALK-IN for now)
-    // =========================================================
-    sb.append("\"buyerDetails\":{");
-    sb.append("\"buyerTin\":\"\",");
-    sb.append("\"buyerNinBrn\":\"\",");
-    sb.append("\"buyerPassportNum\":\"\",");
-    sb.append("\"buyerLegalName\":\"WALK-IN CUSTOMER\",");
-    sb.append("\"buyerBusinessName\":\"\",");
-    sb.append("\"buyerAddress\":\"\",");
-    sb.append("\"buyerEmail\":\"\",");
-    sb.append("\"buyerMobilePhone\":\"\",");
-    sb.append("\"buyerLinePhone\":\"\",");
-    sb.append("\"buyerPlaceOfBusi\":\"\",");
-    sb.append("\"buyerType\":\"1\",");
-    sb.append("\"buyerCitizenship\":\"\",");
-    sb.append("\"buyerSector\":\"\",");
-    sb.append("\"buyerReferenceNo\":\"\"");
-    sb.append("},");
-
-    // =========================================================
-    // goodsDetails – one row per SaleItem
-    // =========================================================
-    sb.append("\"goodsDetails\":[");
-    boolean first = true;
+    // ---------------- goodsDetails ----------------
+    java.util.List<Map<String, Object>> goods = new java.util.ArrayList<>();
     int order = 1;
     for (SaleItem it : sale.items) {
-        if (!first) sb.append(',');
-        first = false;
-
-        double lineNet  = it.lineTotal;
-        double lineVat  = it.vatAmount;
-        double lineGross = lineNet + lineVat;
-
-        sb.append('{');
-        sb.append("\"deemedFlag\":\"2\",");      // normal sale
-        sb.append("\"discountFlag\":\"2\",");    // no discount at line level
-        sb.append("\"item\":\"").append(esc(nz(it.itemName, "ITEM"))).append("\",");
-        sb.append("\"itemCode\":\"").append(esc(nz(it.sku, "ITEM" + order))).append("\",");
-        sb.append("\"qty\":").append(it.qty).append(',');
-        sb.append("\"unitPrice\":").append(it.unitPrice).append(',');
-        sb.append("\"total\":").append(lineNet).append(','); // net
-        sb.append("\"tax\":").append(lineVat).append(',');
-        sb.append("\"unitOfMeasure\":\"10\",");  // 10 = “PCS” in many EFRIS examples
-        sb.append("\"taxRate\":").append(it.vatRate / 100.0).append(',');
-        sb.append("\"discountTaxRate\":0.0,");
-        sb.append("\"orderNumber\":").append(order).append(',');
-        sb.append("\"exciseFlag\":\"2\",");
-        sb.append("\"categoryId\":\"\",");
-        sb.append("\"categoryName\":\"\",");
-        sb.append("\"goodsCategoryId\":\"\",");
-        sb.append("\"goodsCategoryName\":\"\"");
-        sb.append('}');
-        order++;
+        Map<String, Object> g = new HashMap<>();
+        g.put("deemedFlag", "2");                               // 2 = normal
+        g.put("discountFlag", "2");                             // 2 = no discount
+        g.put("item", nz(it.itemName));
+        g.put("itemCode", nz(it.sku));
+        g.put("qty", it.qty);
+        g.put("unitPrice", it.unitPrice);
+        g.put("total", it.lineTotal);                           // net amount
+        g.put("tax", it.vatAmount);                             // VAT amount
+        g.put("unitOfMeasure", "10");                           // generic pcs; adjust later
+        g.put("taxRate", it.vatRate / 100.0);                   // 18% → 0.18
+        g.put("discountTaxRate", 0.0);
+        g.put("orderNumber", order++);
+        g.put("exciseFlag", "2");
+        g.put("categoryId", "");
+        g.put("categoryName", "");
+        g.put("goodsCategoryId", "");
+        g.put("goodsCategoryName", "");
+        goods.add(g);
     }
-    sb.append("],");
+    root.put("goodsDetails", goods);
 
-    // =========================================================
-    // taxDetails – simple single VAT bucket
-    // =========================================================
-    sb.append("\"taxDetails\":[");
-    sb.append('{');
-    sb.append("\"taxCategory\":\"VAT\",");
-    sb.append("\"netAmount\":").append(net).append(',');
-    sb.append("\"taxAmount\":").append(vat).append(',');
-    sb.append("\"grossAmount\":").append(gross).append(',');
-    sb.append("\"exciseUnit\":\"\",");
-    sb.append("\"exciseCurrency\":\"UGX\"");
-    sb.append('}');
-    sb.append("],");
+    // ---------------- taxDetails ----------------
+    Map<String, Object> tax = new HashMap<>();
+    tax.put("taxCategory", "VAT");
+    tax.put("netAmount", subtotal);
+    tax.put("taxAmount", vatTotal);
+    tax.put("grossAmount", total);
+    tax.put("exciseUnit", "");
+    tax.put("exciseCurrency", nz(b.currency, "UGX"));
+    java.util.List<Map<String, Object>> taxDetails = new java.util.ArrayList<>();
+    taxDetails.add(tax);
+    root.put("taxDetails", taxDetails);
 
-    // =========================================================
-    // summary
-    // =========================================================
-    sb.append("\"summary\":{");
-    sb.append("\"netAmount\":").append(net).append(',');
-    sb.append("\"taxAmount\":").append(vat).append(',');
-    sb.append("\"grossAmount\":").append(gross).append(',');
-    sb.append("\"itemCount\":").append(sale.items.size()).append(',');
-    sb.append("\"modeCode\":\"0\",");  // 0 = normal
-    sb.append("\"remarks\":\"").append(esc(nz(sale.note, ""))).append("\",");
-    sb.append("\"qrCode\":\"\"");
-    sb.append("},");
+    // ---------------- summary ----------------
+    Map<String, Object> summary = new HashMap<>();
+    summary.put("netAmount", subtotal);
+    summary.put("taxAmount", vatTotal);
+    summary.put("grossAmount", total);
+    summary.put("itemCount", sale.items.size());
+    summary.put("modeCode", "0");
+    summary.put("remarks", nz(sale.note, "POS sale"));
+    summary.put("qrCode", "");                                  // filled in response
+    root.put("summary", summary);
 
-    // =========================================================
-    // extend (optional)
-    // =========================================================
-    sb.append("\"extend\":{");
-    sb.append("\"reason\":\"\",");
-    sb.append("\"reasonCode\":\"\"");
-    sb.append("}");
+    // ---------------- extend ----------------
+    Map<String, Object> extend = new HashMap<>();
+    extend.put("reason", "");
+    extend.put("reasonCode", "");
+    root.put("extend", extend);
 
-    sb.append('}');
-    return sb.toString();
+    // Final JSON string
+    return Json.stringify(root);
 }
-
 // imports not required; pure String building
 
 private static String esc(String s) {
