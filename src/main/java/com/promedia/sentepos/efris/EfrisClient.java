@@ -187,6 +187,7 @@ public final class EfrisClient {
         AppLog.blobInPayloads(ref, "response", prettyOrRaw(body));
 
         // ----------------- Parse result -----------------
+                // ----------------- Parse result -----------------
         Result r = new Result();
         r.rawRequest  = requestJson;
         r.rawResponse = body;
@@ -208,34 +209,43 @@ public final class EfrisClient {
                 return r;
             }
 
-            // When success, decode inner content again to extract FDN, QR, etc.
+            // ---------- decode inner response content ----------
+            String innerRespJson = null;
             JsonNode dataNode = resp.get("data");
             if (dataNode != null && dataNode.hasNonNull("content")) {
                 String respContentB64 = dataNode.get("content").asText("");
                 if (!respContentB64.isEmpty()) {
-                    String innerRespJson = new String(
+                    innerRespJson = new String(
                             Base64.getDecoder().decode(respContentB64),
                             StandardCharsets.UTF_8
                     );
                     AppLog.blobInPayloads(ref, "inner-response", prettyOrRaw(innerRespJson));
+                }
+            }
 
-                    JsonNode inv = MAPPER.readTree(innerRespJson);
+            if (innerRespJson != null && !innerRespJson.isBlank()) {
+                JsonNode inv = MAPPER.readTree(innerRespJson);
+                JsonNode basic   = inv.get("basicInformation");
+                JsonNode summary = inv.get("summary");
 
-                    // These field paths come from EFRIS T109 examples.
-                    JsonNode basic = inv.get("basicInformation");
-                    JsonNode summary = inv.get("summary");
-
-                    if (basic != null) {
-                        if (basic.hasNonNull("invoiceNo")) {
-                            r.invoiceNumber = basic.get("invoiceNo").asText();
-                        }
-                        if (basic.hasNonNull("antifakeCode")) {
-                            r.verificationCode = basic.get("antifakeCode").asText();
-                        }
+                if (basic != null) {
+                    if (basic.hasNonNull("invoiceNo")) {
+                        r.invoiceNumber = basic.get("invoiceNo").asText("");
                     }
-                    if (summary != null && summary.hasNonNull("qrCode")) {
-                        r.qrBase64 = summary.get("qrCode").asText();
+                    // some responses use fdn
+                    if ((r.invoiceNumber == null || r.invoiceNumber.isBlank())
+                            && basic.hasNonNull("fdn")) {
+                        r.invoiceNumber = basic.get("fdn").asText("");
                     }
+                    if (basic.hasNonNull("antifakeCode")) {
+                        r.verificationCode = basic.get("antifakeCode").asText("");
+                    }
+                }
+
+                if (summary != null) {
+                    // look for any reasonable QR field name
+                    r.qrBase64 = firstNonEmpty(summary,
+                            "qrCode", "QRCode", "qrCodeStr", "qrCodeBase64");
                 }
             }
 
@@ -304,5 +314,17 @@ public final class EfrisClient {
         } catch (Exception ignore) {
             return maybeJson;
         }
+    }
+    
+        /** Return first non-empty child from the given JSON node. */
+    private static String firstNonEmpty(JsonNode node, String... names) {
+        if (node == null) return null;
+        for (String n : names) {
+            if (node.hasNonNull(n)) {
+                String v = node.get(n).asText("");
+                if (v != null && !v.isBlank()) return v;
+            }
+        }
+        return null;
     }
 }

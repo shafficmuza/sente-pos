@@ -207,7 +207,7 @@ private void doFinish() {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("POS Screen");
-        setBackground(new java.awt.Color(204, 255, 255));
+        setBackground(new java.awt.Color(0, 153, 255));
 
         txtScan.setFont(new java.awt.Font("sansserif", 0, 18)); // NOI18N
         txtScan.addActionListener(new java.awt.event.ActionListener() {
