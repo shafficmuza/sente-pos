@@ -7,91 +7,53 @@ import com.promedia.sentepos.efris.EfrisPayloadBuilder;
 import com.promedia.sentepos.model.Payment;
 import com.promedia.sentepos.model.Sale;
 
-import java.lang.reflect.Method;
-
 public class FiscalService {
 
-    private static final String DEFAULT_ENDPOINT = "http://127.0.0.1:9880/efristcs/ws/tcsapp/getInformation"; // TODO: real URA URL
+    private static final String DEFAULT_ENDPOINT =
+            "http://127.0.0.1:9880/efristcs/ws/tcsapp/getInformation";
 
     /** Build payload → save PENDING → send → mark SENT/FAILED. Returns invoice number on success. */
     public static String fiscalise(long saleId, Sale sale, Payment payment) throws Exception {
-        // 1) Build JSON payload
+        // 1) Build inner T109 (e-Invoice/e-Receipt) JSON
         String payload = EfrisPayloadBuilder.buildInvoicePayload(saleId, sale, payment);
 
-        // 2) Save PENDING
+        // 2) Save PENDING row
         EfrisDAO.upsertPending(saleId, payload);
 
-        // 3) Resolve endpoint/creds from Business (CamelCase or snake_case fields)
-        Object b = BusinessDAO.loadSingle();
-        if (b == null) throw new IllegalStateException("Business not configured.");
+        // 3) Load business config
+        var b = BusinessDAO.loadSingle();
+        if (b == null) {
+            throw new IllegalStateException("Business not configured.");
+        }
 
-        String user   = field(b, "efrisUsername", "efris_username");
-        String pass   = field(b, "efrisPassword", "efris_password");
-        String device = field(b, "efrisDeviceNo", "efris_device_no");
-        String endpoint = DEFAULT_ENDPOINT; // or from config
+        String user   = b.efrisUsername;
+        String pass   = b.efrisPassword;
+        String device = b.efrisDeviceNo;
+        String endpoint = DEFAULT_ENDPOINT;   // local TCS
 
-        // 4) Send
+        // 4) Send via offline enabler
         EfrisClient client = new EfrisClient();
         EfrisClient.Result r = client.sendInvoiceJson(payload, endpoint, user, pass, device);
 
-        // 5) Persist (try multiple EfrisDAO signatures without compile dependency)
+        // 5) Persist result
         if (r.ok) {
-            // Preferred: markSent(long, String, String)
-            if (!invokeIfExists(EfrisDAO.class, "markSent",
-                    new Class<?>[]{long.class, String.class, String.class},
-                    new Object[]{saleId, r.invoiceNumber, r.qrBase64})) {
-
-                // Fallback: markSent(long, String)
-                invokeIfExists(EfrisDAO.class, "markSent",
-                        new Class<?>[]{long.class, String.class},
-                        new Object[]{saleId, r.invoiceNumber});
-
-                // Optional: updateQr(long, String) if present
-                invokeIfExists(EfrisDAO.class, "updateQr",
-                        new Class<?>[]{long.class, String.class},
-                        new Object[]{saleId, r.qrBase64});
-            }
+            // Store full response + verification + QR
+            EfrisDAO.markSent(
+                    saleId,
+                    r.rawResponse,       // response_json
+                    r.invoiceNumber,     // invoice_number
+                    r.qrBase64,          // qr_base64 (URL or image)
+                    r.verificationCode   // verification_code
+            );
             return r.invoiceNumber;
         } else {
-            // Preferred: markFailed(long, String, String)
-            if (!invokeIfExists(EfrisDAO.class, "markFailed",
-                    new Class<?>[]{long.class, String.class, String.class},
-                    new Object[]{saleId, r.rawResponse, r.error})) {
-
-                // Fallback: markFailed(long, String)
-                invokeIfExists(EfrisDAO.class, "markFailed",
-                        new Class<?>[]{long.class, String.class},
-                        new Object[]{saleId, r.error});
-            }
+            // FAILED with full response + error text
+            EfrisDAO.markFailed(
+                    saleId,
+                    r.rawResponse,       // response_json
+                    r.error              // error_message
+            );
             throw new RuntimeException("Fiscalisation failed: " + r.error);
-        }
-    }
-
-    // ---------- small reflection helpers ----------
-    private static String field(Object o, String... names) {
-        if (o == null) return null;
-        for (String n : names) {
-            try {
-                var f = o.getClass().getDeclaredField(n);
-                f.setAccessible(true);
-                Object v = f.get(o);
-                return v != null ? String.valueOf(v) : null;
-            } catch (NoSuchFieldException ignored) { }
-            catch (Throwable t) { /* ignore */ }
-        }
-        return null;
-    }
-
-    private static boolean invokeIfExists(Class<?> clazz, String name, Class<?>[] sig, Object[] args) {
-        try {
-            Method m = clazz.getMethod(name, sig);
-            m.invoke(null, args);
-            return true;
-        } catch (NoSuchMethodException e) {
-            return false;
-        } catch (Throwable t) {
-            // if the method exists but failed, propagate as runtime
-            throw new RuntimeException("Call " + clazz.getSimpleName() + "." + name + " failed: " + t.getMessage(), t);
         }
     }
 }

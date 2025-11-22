@@ -1,7 +1,5 @@
 package com.promedia.sentepos.print;
 
-import com.promedia.sentepos.dao.BusinessDAO;
-import com.promedia.sentepos.dao.EfrisDAO;
 import com.promedia.sentepos.model.Payment;
 import com.promedia.sentepos.model.Sale;
 import com.promedia.sentepos.model.SaleItem;
@@ -20,49 +18,56 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-/** 58mm receipt that reads Business & EFRIS fields using camelCase OR snake_case via reflection. */
+// ZXing for QR generation (make sure dependency is added)
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+
+/**
+ * 58mm receipt that reads Business & EFRIS fields using camelCase OR snake_case via reflection.
+ */
 public class ReceiptPrinter implements Printable {
 
-    // ---------- factory (load Business/EFIRS with flexible field names) ----------
-public static ReceiptPrinter usingBusinessFromDb(Sale sale, Payment payment, long saleId) {
-    Object b = null;
-    Object rec = null;
-    try {
-        b = com.promedia.sentepos.dao.BusinessDAO.loadSingle();
-    } catch (Exception e) { // <-- was SQLException
-        System.err.println("WARN: Failed to load Business: " + e.getMessage());
+    // ---------- factory (load Business / EFRIS with flexible field names) ----------
+    public static ReceiptPrinter usingBusinessFromDb(Sale sale, Payment payment, long saleId) {
+        Object b = null;
+        Object rec = null;
+        try {
+            b = com.promedia.sentepos.dao.BusinessDAO.loadSingle();
+        } catch (Exception e) {
+            System.err.println("WARN: Failed to load Business: " + e.getMessage());
+        }
+        try {
+            rec = com.promedia.sentepos.dao.EfrisDAO.findBySaleId(saleId);
+        } catch (Exception e) {
+            System.err.println("INFO: No EFRIS record for sale " + saleId + ": " + e.getMessage());
+        }
+
+        String shopName   = str(b, "name");
+        if (isBlank(shopName)) shopName = "SentePOS";
+
+        String addressLine = str(b, "addressLine", "address_line");
+        String city        = str(b, "city");
+        String country     = str(b, "country");
+        String shopAddress = joinNonBlank(", ", addressLine, city, country);
+
+        String phone      = str(b, "phone");
+        String tin        = str(b, "tin");
+        String branchCode = str(b, "branchCode", "branch_code");
+        String deviceNo   = str(b, "efrisDeviceNo", "efris_device_no");
+
+        String invoiceNo  = str(rec, "invoiceNumber", "invoice_number");
+        String qrBase64   = str(rec, "qrBase64", "qr_base64");  // URL or base64 image
+        String status     = str(rec, "status");
+        String verCode    = str(rec, "verificationCode", "verification_code");
+
+        return new ReceiptPrinter(
+                shopName, shopAddress, phone, tin, branchCode, deviceNo,
+                sale, payment, saleId,
+                invoiceNo, qrBase64, status,
+                verCode
+        );
     }
-    try {
-        rec = com.promedia.sentepos.dao.EfrisDAO.findBySaleId(saleId);
-    } catch (Exception e) { // <-- was SQLException
-        System.err.println("INFO: No EFRIS record for sale " + saleId + ": " + e.getMessage());
-    }
-
-    String shopName   = str(b, "name");
-    if (isBlank(shopName)) shopName = "SentePOS";
-
-    String addressLine = str(b, "addressLine", "address_line");
-    String city        = str(b, "city");
-    String country     = str(b, "country");
-    String shopAddress = joinNonBlank(", ", addressLine, city, country);
-
-    String phone      = str(b, "phone");
-    String tin        = str(b, "tin");
-    String branchCode = str(b, "branchCode", "branch_code");
-    String deviceNo   = str(b, "efrisDeviceNo", "efris_device_no");
-
-    String invoiceNo  = str(rec, "invoiceNumber", "invoice_number");
-    String qrBase64   = str(rec, "qrBase64", "qr_base64");
-    String status     = str(rec, "status");
-    String verCode    = str(rec, "verificationCode", "verification_code"); // NEW
-
-   return new ReceiptPrinter(
-    shopName, shopAddress, phone, tin, branchCode, deviceNo,
-    sale, payment, saleId,
-    invoiceNo, qrBase64, status,
-    verCode // NEW
-);
-}
 
     // ----------------------- instance fields -----------------------
     private final String shopName, shopAddress, shopPhone, shopTin, branchCode, deviceNo;
@@ -71,10 +76,10 @@ public static ReceiptPrinter usingBusinessFromDb(Sale sale, Payment payment, lon
     private final long saleId;
 
     // EFRIS
-    private final String efrisInvoiceNo;  // invoiceNumber / invoice_number
-    private final String efrisQrBase64;   // qrBase64 / qr_base64
-    private final String efrisStatus;     // PENDING | SENT | FAILED
-    private final String efrisVerificationCode;   // NEW (optional)
+    private final String efrisInvoiceNo;        // invoiceNumber / invoice_number
+    private final String efrisQrValue;          // qrBase64 / qr_base64 (URL or base64 PNG)
+    private final String efrisStatus;           // PENDING | SENT | FAILED
+    private final String efrisVerificationCode; // antifakeCode
 
     // layout
     private static final double PAPER_WIDTH_INCH = 2.28;
@@ -82,29 +87,33 @@ public static ReceiptPrinter usingBusinessFromDb(Sale sale, Payment payment, lon
     private final Font font = new Font(Font.MONOSPACED, Font.PLAIN, 9);
     private final Font fontBold = new Font(Font.MONOSPACED, Font.BOLD, 9);
 
- public ReceiptPrinter(String shopName, String shopAddress, String shopPhone, String shopTin,
-                      String branchCode, String deviceNo,
-                      Sale sale, Payment payment, long saleId,
-                      String efrisInvoiceNo, String efrisQrBase64, String efrisStatus,
-                      String efrisVerificationCode) {          // +1 param
-            this.shopName = shopName;
-            this.shopAddress = shopAddress;
-            this.shopPhone = shopPhone;
-            this.shopTin = shopTin;
-            this.branchCode = branchCode;
-            this.deviceNo = deviceNo;
-            this.sale = sale;
-            this.payment = payment;
-            this.saleId = saleId;
-            this.efrisInvoiceNo = efrisInvoiceNo;
-            this.efrisQrBase64 = efrisQrBase64;
-            this.efrisStatus = efrisStatus;
-            this.efrisVerificationCode = efrisVerificationCode;        // assign
-}
+    public ReceiptPrinter(String shopName, String shopAddress, String shopPhone, String shopTin,
+                          String branchCode, String deviceNo,
+                          Sale sale, Payment payment, long saleId,
+                          String efrisInvoiceNo, String efrisQrValue, String efrisStatus,
+                          String efrisVerificationCode) {
+        this.shopName = shopName;
+        this.shopAddress = shopAddress;
+        this.shopPhone = shopPhone;
+        this.shopTin = shopTin;
+        this.branchCode = branchCode;
+        this.deviceNo = deviceNo;
+        this.sale = sale;
+        this.payment = payment;
+        this.saleId = saleId;
+        this.efrisInvoiceNo = efrisInvoiceNo;
+        this.efrisQrValue = efrisQrValue;
+        this.efrisStatus = efrisStatus;
+        this.efrisVerificationCode = efrisVerificationCode;
+    }
 
     // --------------------------- Preview ---------------------------
     public void preview(Component parent) {
-        JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(parent), "Receipt Preview", Dialog.ModalityType.MODELESS);
+        JDialog dlg = new JDialog(
+                SwingUtilities.getWindowAncestor(parent),
+                "Receipt Preview",
+                Dialog.ModalityType.MODELESS
+        );
         dlg.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         JPanel paper = new JPanel() {
@@ -123,7 +132,7 @@ public static ReceiptPrinter usingBusinessFromDb(Sale sale, Payment payment, lon
                 } catch (Exception ignore) {}
             }
             @Override public Dimension getPreferredSize() {
-                int w = (int)(PAPER_WIDTH_INCH * 72.0);
+                int w = (int) (PAPER_WIDTH_INCH * 72.0);
                 return new Dimension(w + 40, 1200);
             }
         };
@@ -131,7 +140,9 @@ public static ReceiptPrinter usingBusinessFromDb(Sale sale, Payment payment, lon
         JButton btnPrint = new JButton("Print");
         btnPrint.addActionListener(e -> {
             try { this.print(null); }
-            catch (PrinterException ex) { JOptionPane.showMessageDialog(dlg, "Print failed: " + ex.getMessage()); }
+            catch (PrinterException ex) {
+                JOptionPane.showMessageDialog(dlg, "Print failed: " + ex.getMessage());
+            }
         });
 
         JPanel south = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -161,7 +172,8 @@ public static ReceiptPrinter usingBusinessFromDb(Sale sale, Payment payment, lon
         if (preferredPrinterName != null && !preferredPrinterName.isBlank()) {
             PrintService[] services = PrinterJob.lookupPrintServices();
             for (PrintService ps : services) {
-                if (ps.getName().toLowerCase(Locale.ROOT).contains(preferredPrinterName.toLowerCase(Locale.ROOT))) {
+                if (ps.getName().toLowerCase(Locale.ROOT)
+                      .contains(preferredPrinterName.toLowerCase(Locale.ROOT))) {
                     try { job.setPrintService(ps); } catch (Exception ignore) {}
                     break;
                 }
@@ -195,7 +207,9 @@ public static ReceiptPrinter usingBusinessFromDb(Sale sale, Payment payment, lon
 
         // Sale meta
         y = drawText(g2, "Sale: " + saleId, LEFT_PAD, y);
-        y = drawText(g2, new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date()), LEFT_PAD, y);
+        y = drawText(g2,
+                new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date()),
+                LEFT_PAD, y);
         drawLine(g2, y, width); y += 8;
 
         // Items header
@@ -206,15 +220,18 @@ public static ReceiptPrinter usingBusinessFromDb(Sale sale, Payment payment, lon
         List<SaleItem> items = sale.items;
         double sub = 0.0, vat = 0.0;
         for (SaleItem it : items) {
-            String name  = safe(it.itemName, 18);
-            String qty   = fmt0(it.qty);
-            String price = fmt0(it.unitPrice);
-            double line  = it.lineTotal;
-            double v     = it.vatAmount;
+            String name   = safe(it.itemName, 18);
+            String qty    = fmtPlain(it.qty);
+            String price  = fmtPlain(it.unitPrice);
+            double line   = it.lineTotal;
+            double v      = it.vatAmount;
+            String amount = fmtPlain(line + v);
 
+            // line 1: item name
             y = drawText(g2, padRight(name, 18), LEFT_PAD, y);
-            String amount = fmt0(line + v);
-            String line2 = padLeft(qty, 4) + " x " + padLeft(price, 6) + "  " + padLeft(amount, 7);
+            // line 2: qty x price   amount
+            String line2 = padLeft(qty, 4) + " x " + padLeft(price, 6)
+                         + "  " + padLeft(amount, 7);
             y = drawText(g2, line2, LEFT_PAD, y);
 
             sub += line;
@@ -225,19 +242,23 @@ public static ReceiptPrinter usingBusinessFromDb(Sale sale, Payment payment, lon
         double total = sub + vat;
 
         // Totals
-        y = drawKV(g2, "Subtotal:", fmt0(sub), LEFT_PAD, width, y);
-        y = drawKV(g2, "VAT:",      fmt0(vat), LEFT_PAD, width, y);
+        y = drawKV(g2, "Subtotal:", fmtMoney(sub), LEFT_PAD, width, y);
+        y = drawKV(g2, "VAT:",      fmtMoney(vat), LEFT_PAD, width, y);
         g2.setFont(fontBold);
-        y = drawKV(g2, "TOTAL:",    fmt0(total), LEFT_PAD, width, y);
+        y = drawKV(g2, "TOTAL:",    fmtMoney(total), LEFT_PAD, width, y);
         g2.setFont(font);
 
         // Payment
         y += 4;
-        String method = (payment != null && payment.method != null) ? payment.method.name() : "CASH";
+        String method = (payment != null && payment.method != null)
+                ? payment.method.name()
+                : "CASH";
         double paid   = (payment != null) ? payment.amount : total;
-        y = drawKV(g2, "Paid (" + method + "):", fmt0(paid), LEFT_PAD, width, y);
+        y = drawKV(g2, "Paid (" + method + "):", fmtMoney(paid), LEFT_PAD, width, y);
         double change = paid - total;
-        if (change > 0.0) y = drawKV(g2, "Change:", fmt0(change), LEFT_PAD, width, y);
+        if (change > 0.0) {
+            y = drawKV(g2, "Change:", fmtMoney(change), LEFT_PAD, width, y);
+        }
 
         // EFRIS block
         y += 8; drawLine(g2, y, width); y += 8;
@@ -247,29 +268,20 @@ public static ReceiptPrinter usingBusinessFromDb(Sale sale, Payment payment, lon
 
         boolean sent = "SENT".equalsIgnoreCase(efrisStatus);
         if (!sent) {
-            y = drawCentered(g2, "Status: " + (isBlank(efrisStatus) ? "PENDING" : efrisStatus), y, width);
+            y = drawCentered(
+                    g2,
+                    "Status: " + (isBlank(efrisStatus) ? "PENDING" : efrisStatus),
+                    y, width
+            );
         } else {
             if (!isBlank(efrisInvoiceNo)) {
                 y = drawKV(g2, "FDN:", efrisInvoiceNo, LEFT_PAD, width, y);
             }
-            if (!isBlank(efrisVerificationCode)) {               // optional
+            if (!isBlank(efrisVerificationCode)) {
                 y = drawKV(g2, "Verification:", efrisVerificationCode, LEFT_PAD, width, y);
             }
-            if (!isBlank(efrisQrBase64)) {
-                BufferedImage qr = decodeBase64Image(efrisQrBase64);
-                if (qr != null) {
-                    int maxW = Math.min(120, width - 20);
-                    int drawW = Math.min(qr.getWidth(), maxW);
-                    int drawH = (int) (qr.getHeight() * (drawW / (double) qr.getWidth()));
-                    int x = (width - drawW) / 2;
-                    g2.drawImage(qr, x, y, drawW, drawH, null);
-                    y += drawH + 6;
-                }
-            }
-        }
-        // QR
-        if (!isBlank(efrisQrBase64)) {
-            BufferedImage qr = decodeBase64Image(efrisQrBase64);
+            // Draw QR once if we have any value
+            BufferedImage qr = decodeQrImage(efrisQrValue);
             if (qr != null) {
                 int maxW = Math.min(120, width - 20);
                 int drawW = Math.min(qr.getWidth(), maxW);
@@ -288,35 +300,112 @@ public static ReceiptPrinter usingBusinessFromDb(Sale sale, Payment payment, lon
     }
 
     // -------------------------- helpers --------------------------
-    private static BufferedImage decodeBase64Image(String b64) {
-        try { return ImageIO.read(new ByteArrayInputStream(Base64.getDecoder().decode(b64))); }
-        catch (Exception e) { return null; }
+
+    /**
+     * Accepts either:
+     *  - base64-encoded PNG, or
+     *  - plain text / URL (like EFRIS qrCode) and generates a QR image with ZXing.
+     */
+    private static BufferedImage decodeQrImage(String value) {
+        if (isBlank(value)) return null;
+
+        // 1) Try base64 image
+        try {
+            byte[] bytes = Base64.getDecoder().decode(value);
+            BufferedImage img = ImageIO.read(new ByteArrayInputStream(bytes));
+            if (img != null) return img;
+        } catch (Exception ignore) {
+            // not base64 image, fall through
+        }
+
+        // 2) Treat as text / URL and generate QR
+        try {
+            QRCodeWriter writer = new QRCodeWriter();
+            BitMatrix matrix = writer.encode(value, BarcodeFormat.QR_CODE, 200, 200);
+            int w = matrix.getWidth();
+            int h = matrix.getHeight();
+            BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_BYTE_GRAY);
+            for (int x = 0; x < w; x++) {
+                for (int y = 0; y < h; y++) {
+                    img.setRGB(x, y, matrix.get(x, y) ? 0xFF000000 : 0xFFFFFFFF);
+                }
+            }
+            return img;
+        } catch (Exception e) {
+            System.err.println("QR generation failed: " + e.getMessage());
+            return null;
+        }
     }
-    private static boolean isBlank(String s){ return s==null || s.isBlank(); }
+
+    private static boolean isBlank(String s){ return s == null || s.isBlank(); }
     private static String nonEmpty(String s, String fallback){ return isBlank(s) ? fallback : s; }
-    private static String fmt0(double v){ return String.format(Locale.US, "UGX %, .0f", v).replace(" ,"," "); }
-    private static String padLeft(String s, int n){ if(s==null)s=""; if(s.length()>=n)return s; return " ".repeat(n-s.length())+s; }
-    private static String padRight(String s,int n){ if(s==null)s=""; if(s.length()>=n)return s.substring(0,n); return s+" ".repeat(n-s.length()); }
-    private static String safe(String s,int max){ if(s==null)return ""; return (s.length()>max)? s.substring(0,max): s; }
-    private static int drawText(Graphics2D g2,String txt,int x,int y){ g2.drawString(txt,x,y); return y + g2.getFontMetrics().getHeight(); }
-    private static int drawCentered(Graphics2D g2,String txt,int y,int w){ int tw=g2.getFontMetrics().stringWidth(txt); int x=Math.max(0,(w-tw)/2); g2.drawString(txt,x,y); return y + g2.getFontMetrics().getHeight(); }
-    private static void drawLine(Graphics2D g2,int y,int w){ g2.drawLine(0,y,w,y); }
+
+    // Money used in totals
+    private static String fmtMoney(double v){
+        return "UGX " + String.format(Locale.US, "%,.0f", v);
+    }
+
+    // Plain numeric for columns in items section
+    private static String fmtPlain(double v){
+        return String.format(Locale.US, "%,.0f", v);
+    }
+
+    private static String padLeft(String s, int n){
+        if (s == null) s = "";
+        if (s.length() >= n) return s;
+        return " ".repeat(n - s.length()) + s;
+    }
+
+    private static String padRight(String s,int n){
+        if (s == null) s = "";
+        if (s.length() >= n) return s.substring(0, n);
+        return s + " ".repeat(n - s.length());
+    }
+
+    private static String safe(String s,int max){
+        if (s == null) return "";
+        return (s.length() > max) ? s.substring(0, max) : s;
+    }
+
+    private static int drawText(Graphics2D g2,String txt,int x,int y){
+        g2.drawString(txt, x, y);
+        return y + g2.getFontMetrics().getHeight();
+    }
+
+    private static int drawCentered(Graphics2D g2,String txt,int y,int w){
+        int tw = g2.getFontMetrics().stringWidth(txt);
+        int x = Math.max(0, (w - tw) / 2);
+        g2.drawString(txt, x, y);
+        return y + g2.getFontMetrics().getHeight();
+    }
+
+    private static void drawLine(Graphics2D g2,int y,int w){
+        g2.drawLine(0, y, w, y);
+    }
+
     private static int drawKV(Graphics2D g2,String k,String v,int x,int w,int y){
         y = drawText(g2, k, x, y);
         int tw = g2.getFontMetrics().stringWidth(v);
-        g2.drawString(v, w-10 - tw, y - g2.getFontMetrics().getDescent());
+        g2.drawString(v, w - 10 - tw, y - g2.getFontMetrics().getDescent());
         return y;
     }
+
     private static int drawWrappedCentered(Graphics2D g2,String text,int y,int width,int maxChars){
         if (isBlank(text)) return y;
         String[] words = text.split("\\s+");
         StringBuilder line = new StringBuilder();
         for (String w : words) {
-            if (line.length()==0) line.append(w);
-            else if (line.length()+1+w.length() <= maxChars) line.append(' ').append(w);
-            else { y = drawCentered(g2, line.toString(), y, width); line.setLength(0); line.append(w); }
+            if (line.length() == 0) {
+                line.append(w);
+            } else if (line.length() + 1 + w.length() <= maxChars) {
+                line.append(' ').append(w);
+            } else {
+                y = drawCentered(g2, line.toString(), y, width);
+                line.setLength(0);
+                line.append(w);
+            }
         }
-        if (line.length()>0) y = drawCentered(g2, line.toString(), y, width);
+        if (line.length() > 0) y = drawCentered(g2, line.toString(), y, width);
         return y;
     }
 
@@ -329,8 +418,10 @@ public static ReceiptPrinter usingBusinessFromDb(Sale sale, Payment payment, lon
                 f.setAccessible(true);
                 Object v = f.get(o);
                 return v != null ? String.valueOf(v) : null;
-            } catch (NoSuchFieldException ignored) { }
-            catch (Throwable t) { /* ignore */ }
+            } catch (NoSuchFieldException ignored) {
+            } catch (Throwable t) {
+                // ignore
+            }
         }
         return null;
     }
