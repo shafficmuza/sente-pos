@@ -88,30 +88,30 @@ public final class PosService {
             double total       // "
     ) throws Exception {
 
-   // Map UI ItemLine rows into DAO Items (compute line_total & vat_amount)
-List<CreditNoteDAO.Item> items = new ArrayList<>();
-if (lines != null) {
-    for (CreditNoteDAO.ItemLine ln : lines) {
-        CreditNoteDAO.Item it = new CreditNoteDAO.Item();
-        it.product_id = ln.product_id;
-        it.item_name  = ln.item_name;
-        it.sku        = ln.sku;
+        // Map UI ItemLine rows into DAO Items (compute line_total & vat_amount)
+         List<CreditNoteDAO.Item> items = new ArrayList<>();
+         if (lines != null) {
+             for (CreditNoteDAO.ItemLine ln : lines) {
+                 CreditNoteDAO.Item it = new CreditNoteDAO.Item();
+                 it.product_id = ln.product_id;
+                 it.item_name  = ln.item_name;
+                 it.sku        = ln.sku;
 
-        // core numeric fields coming from ItemLine
-        it.qty        = ln.qty;
-        it.unit_price = ln.unit_price;
-        it.vat_rate   = ln.vat_rate;
+                 // core numeric fields coming from ItemLine
+                 it.qty        = ln.qty;
+                 it.unit_price = ln.unit_price;
+                 it.vat_rate   = ln.vat_rate;
 
-        // compute totals (avoid referencing non-existent fields)
-        double line   = (it.qty) * (it.unit_price);
-        double vatAmt = line * (it.vat_rate / 100.0);
+                 // compute totals (avoid referencing non-existent fields)
+                 double line   = (it.qty) * (it.unit_price);
+                 double vatAmt = line * (it.vat_rate / 100.0);
 
-        it.line_total = line;
-        it.vat_amount = vatAmt;
+                 it.line_total = line;
+                 it.vat_amount = vatAmt;
 
-        items.add(it);
-    }
-}
+                 items.add(it);
+             }
+         }
 
         // Delegate to the core service (recomputes totals from items)
         return CreditNoteService.issueCreditNote(saleId, items, reason, note);

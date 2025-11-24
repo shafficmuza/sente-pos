@@ -7,7 +7,7 @@ import java.sql.*;
 public final class EfrisDAO {
     private EfrisDAO(){}
 
-    /** DTO that mirrors the efris_invoices table (snake_case field names kept). */
+    // DTO that mirrors the efris_invoices table (snake_case field names kept).
     public static final class Rec {
         public long   id;
         public long   sale_id;
@@ -21,7 +21,7 @@ public final class EfrisDAO {
         public String sent_at;
     }
 
-    /** Upsert PENDING row before hitting EFRIS. */
+    // Upsert PENDING row before hitting EFRIS.
     public static void upsertPending(long saleId, String requestJson) throws SQLException {
         try (Connection c = Db.get()) {
             // Try insert; if exists, update.
@@ -72,7 +72,7 @@ public final class EfrisDAO {
         }
     }
 
-    /** Fallback overload: markSent(long, String) → called if 3-arg is missing. */
+    //** Fallback overload: markSent(long, String) → called if 3-arg is missing. */
     public static void markSent(long saleId, String invoiceNumber) throws SQLException {
         markSent(saleId, invoiceNumber, null);
     }

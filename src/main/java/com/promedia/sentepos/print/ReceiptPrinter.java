@@ -230,8 +230,7 @@ public class ReceiptPrinter implements Printable {
             // line 1: item name
             y = drawText(g2, padRight(name, 18), LEFT_PAD, y);
             // line 2: qty x price   amount
-            String line2 = padLeft(qty, 4) + " x " + padLeft(price, 6)
-                         + "  " + padLeft(amount, 7);
+            String line2  = String.format("%4s x %6s %8s", qty, price, amount);
             y = drawText(g2, line2, LEFT_PAD, y);
 
             sub += line;
