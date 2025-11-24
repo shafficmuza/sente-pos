@@ -38,12 +38,13 @@ public class FiscalService {
         // 5) Persist result
         if (r.ok) {
             // Store full response + verification + QR
-            EfrisDAO.markSent(
+           EfrisDAO.markSent(
                     saleId,
-                    r.rawResponse,       // response_json
-                    r.invoiceNumber,     // invoice_number
-                    r.qrBase64,          // qr_base64 (URL or image)
-                    r.verificationCode   // verification_code
+                    r.rawResponse,          // full JSON
+                    r.invoiceId,            // NEW
+                    r.invoiceNumber,
+                    r.qrBase64,
+                    r.verificationCode
             );
             return r.invoiceNumber;
         } else {

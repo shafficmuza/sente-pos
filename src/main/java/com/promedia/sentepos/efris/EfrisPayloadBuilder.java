@@ -157,8 +157,11 @@ private static String esc(String s) {
     return s.replace("\\", "\\\\").replace("\"", "\\\"");
 }
 
-public static String buildCreditNotePayload(long creditNoteId, com.promedia.sentepos.dao.CreditNoteDAO.Head head,
-        java.util.List<com.promedia.sentepos.dao.CreditNoteDAO.Item> items) throws Exception {
+public static String buildCreditNotePayload(
+        long creditNoteId,
+        com.promedia.sentepos.dao.CreditNoteDAO.Head head,
+        java.util.List<com.promedia.sentepos.dao.CreditNoteDAO.Item> items
+) throws Exception {
 
     Business b = BusinessDAO.loadSingle();
     if (b == null) throw new IllegalStateException("Business not configured.");
@@ -166,8 +169,16 @@ public static String buildCreditNotePayload(long creditNoteId, com.promedia.sent
     // Look up original fiscalised invoice (if any)
     EfrisDAO.Rec inv = null;
     if (head != null) {
-        try { inv = EfrisDAO.findBySaleId(head.sale_id); }
-        catch (Exception ignore) {}
+        try {
+            inv = EfrisDAO.findBySaleId(head.sale_id);
+        } catch (Exception ignore) {}
+    }
+
+    // ✅ Only block if we don't have ANY efris_invoices row
+    if (inv == null) {
+        throw new IllegalStateException(
+            "Original sale was not fiscalised on EFRIS – cannot issue credit note."
+        );
     }
 
     double subtotal = 0.0;
@@ -185,7 +196,7 @@ public static String buildCreditNotePayload(long creditNoteId, com.promedia.sent
 
     Map<String,Object> root = new HashMap<>();
 
-    // -------- sellerDetails (same as invoice) ----------
+    // -------- sellerDetails ----------
     Map<String,Object> seller = new HashMap<>();
     seller.put("tin", nz(b.tin));
     seller.put("ninBrn", nz(b.branchCode));
@@ -201,23 +212,31 @@ public static String buildCreditNotePayload(long creditNoteId, com.promedia.sent
 
     // -------- basicInformation (credit note) ----------
     Map<String,Object> basic = new HashMap<>();
-    basic.put("invoiceNo", creditNo);          // local CN number
+    basic.put("invoiceNo", creditNo);
     basic.put("antifakeCode", "");
     basic.put("deviceNo", nz(b.efrisDeviceNo));
     basic.put("issuedDate", issuedDate);
     basic.put("operator", nz(b.efrisUsername, "admin"));
     basic.put("currency", nz(b.currency, "UGX"));
-    basic.put("invoiceType", "2");            // 2 = credit note (per URA spec)
-    basic.put("invoiceKind", "2");            // e-receipt
-    basic.put("dataSource", "103");           // POS
-    // reference original invoice if we have it
-    basic.put("oriInvoiceId", "");            // we don’t store this yet
-    basic.put("oriInvoiceNo", inv != null ? nz(inv.invoice_number) : "");
+    basic.put("invoiceType", "2");   // credit note
+    basic.put("invoiceKind", "2");   // e-receipt
+    basic.put("dataSource", "103");  // POS
+
+    // 👉 Link to original invoice. For old data, invoice_id may be null, that’s OK.
+    basic.put("oriInvoiceId",
+            (inv.invoice_id != null && !inv.invoice_id.isBlank())
+                    ? inv.invoice_id
+                    : "");
+    basic.put("oriInvoiceNo",
+            (inv.invoice_number != null && !inv.invoice_number.isBlank())
+                    ? inv.invoice_number
+                    : "");
+
     basic.put("reason", nz(head != null ? head.reason : "", "Credit note"));
-    basic.put("payWay", "102");               // same as original; not critical here
+    basic.put("payWay", "102");
     root.put("basicInformation", basic);
 
-    // -------- buyerDetails (walk-in) ----------
+    // -------- buyerDetails ----------
     Map<String,Object> buyer = new HashMap<>();
     buyer.put("buyerTin", "");
     buyer.put("buyerNinBrn", "");
@@ -225,7 +244,7 @@ public static String buildCreditNotePayload(long creditNoteId, com.promedia.sent
     buyer.put("buyerType", "1");
     root.put("buyerDetails", buyer);
 
-    // -------- goodsDetails (items being returned) ----------
+    // -------- goodsDetails ----------
     java.util.List<Map<String,Object>> goods = new java.util.ArrayList<>();
     int order = 1;
     for (var it : items) {
@@ -234,7 +253,7 @@ public static String buildCreditNotePayload(long creditNoteId, com.promedia.sent
         g.put("discountFlag", "2");
         g.put("item", nz(it.item_name));
         g.put("itemCode", nz(it.sku));
-        g.put("qty", it.qty);                 // positive quantity; CN context tells URA it’s a return
+        g.put("qty", it.qty);
         g.put("unitPrice", it.unit_price);
         g.put("total", it.line_total);
         g.put("tax", it.vat_amount);
@@ -269,9 +288,9 @@ public static String buildCreditNotePayload(long creditNoteId, com.promedia.sent
     summary.put("taxAmount", vatTotal);
     summary.put("grossAmount", total);
     summary.put("itemCount", items.size());
-    summary.put("modeCode", "1");  // CN
+    summary.put("modeCode", "1");
     summary.put("remarks", nz(head != null ? head.reason : "", "Credit note"));
-    summary.put("qrCode", "");     // filled by EFRIS response
+    summary.put("qrCode", "");
     root.put("summary", summary);
 
     // -------- extend ----------

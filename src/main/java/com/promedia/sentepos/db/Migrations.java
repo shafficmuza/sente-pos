@@ -150,6 +150,7 @@ public final class Migrations {
           + " status TEXT NOT NULL DEFAULT 'PENDING',"
           + " request_json  TEXT,"
           + " response_json TEXT,"
+          + " invoice_id TEXT," 
           + " invoice_number TEXT,"
           + " qr_base64 TEXT,"
           + " verification_code TEXT,"   // <— NEW here for fresh DBs
@@ -247,9 +248,11 @@ public final class Migrations {
             
             // Backfill missing columns for existing installs (safe no-op on fresh DBs)
             addColumnIfMissing(c, "efris_invoices", "verification_code", "TEXT");
+            addColumnIfMissing(c, "efris_invoices", "invoice_id", "TEXT"); 
             
         } catch (SQLException e) {
             throw new RuntimeException("DB migration failed", e);
+            
         }
     }
 }

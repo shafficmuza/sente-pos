@@ -49,6 +49,7 @@ public class Dashboard extends javax.swing.JFrame {
         efrisLabel = new javax.swing.JLabel();
         userLabel = new javax.swing.JLabel();
         usernameLabel = new javax.swing.JLabel();
+        creditNotesLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("SentePOS — Dashboard");
@@ -126,6 +127,17 @@ public class Dashboard extends javax.swing.JFrame {
         usernameLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         usernameLabel.setText("jLabel1");
 
+        creditNotesLabel.setBackground(new java.awt.Color(0, 153, 153));
+        creditNotesLabel.setFont(new java.awt.Font("sansserif", 0, 18)); // NOI18N
+        creditNotesLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        creditNotesLabel.setText("Credit Notes");
+        creditNotesLabel.setOpaque(true);
+        creditNotesLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                creditNotesLabelMouseClicked(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -137,7 +149,8 @@ public class Dashboard extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(setupLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(salesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(salesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(creditNotesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(36, 36, 36)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addGroup(layout.createSequentialGroup()
@@ -161,10 +174,14 @@ public class Dashboard extends javax.swing.JFrame {
                     .addComponent(posLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(productLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(51, 51, 51)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(userLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(salesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(efrisLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(userLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(efrisLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(salesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(creditNotesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(64, Short.MAX_VALUE))
         );
 
@@ -205,6 +222,13 @@ public class Dashboard extends javax.swing.JFrame {
             f.setVisible(true);
     }//GEN-LAST:event_productLabelMouseClicked
 
+    private void creditNotesLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_creditNotesLabelMouseClicked
+        // TODO add your handling code here:
+         CreditNoteListPanel.openInDialog(this); // To be Deleted
+       // new CreditNotesListFrame().setVisible(true);
+        //CreditNotesListFrame.open();
+    }//GEN-LAST:event_creditNotesLabelMouseClicked
+
     /**
      * @param args the command line arguments
      */
@@ -232,6 +256,7 @@ public class Dashboard extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel creditNotesLabel;
     private javax.swing.JLabel efrisLabel;
     private javax.swing.JLabel posLabel;
     private javax.swing.JLabel productLabel;

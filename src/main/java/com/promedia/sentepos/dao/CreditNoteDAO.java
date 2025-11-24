@@ -9,7 +9,7 @@ import java.util.List;
 public final class CreditNoteDAO {
     private CreditNoteDAO(){}
 
-    // ========================= Existing API (unchanged) =========================
+    // ========================= Existing API (unchchanged core models) =========================
     public static final class Head {
         public long id;
         public long sale_id;
@@ -27,6 +27,51 @@ public final class CreditNoteDAO {
         public String item_name, sku;
         public double qty, unit_price, vat_rate, line_total, vat_amount;
     }
+
+    /**
+     * Row used for listing credit notes with EFRIS info + totals for UI.
+     */
+    public static final class ListRow {
+        public long   id;                      // credit note id
+        public long   sale_id;                 // original sale id
+        public String reason;
+        public String date_time;
+        public double subtotal;
+        public double vat_total;
+        public double total;
+        public double total_qty;               // aggregated from credit_note_items
+        public String status;                  // local CN status
+
+        // EFRIS tracking (from efris_credit_notes)
+        public String efris_status;            // PENDING/SENT/FAILED/CANCELLED
+        public String efris_invoice_number;    // FDN from URA
+        public String efris_verification;      // verification_code
+        public String efris_error_message;     // last return/error message
+    }
+
+    /** Row from original sale to drive "return_qty" input in the dialog. */
+    public static final class SaleLine {
+        public long product_id;
+        public String item_name;
+        public String sku;
+        public double sold_qty;
+        public double unit_price;
+        public double vat_rate;
+        // UI field (not persisted): how much is being returned
+        public double return_qty;
+    }
+
+    /** Minimal line payload used when issuing the CN. */
+    public static final class ItemLine {
+        public long product_id;
+        public String item_name;
+        public String sku;
+        public double qty;
+        public double unit_price;
+        public double vat_rate;
+    }
+
+    // ========================= Core write APIs =========================
 
     /** Create a DRAFT credit note head (no date_time stamp yet). */
     public static long createHead(long sale_id, String reason, double subtotal, double vat_total, double total, String note)
@@ -79,6 +124,8 @@ public final class CreditNoteDAO {
         }
     }
 
+    // ========================= Read APIs =========================
+
     public static Head findHead(long id) throws SQLException {
         final String sql =
             "SELECT id, sale_id, reason, date_time, subtotal, vat_total, total, status, note " +
@@ -129,31 +176,7 @@ public final class CreditNoteDAO {
         }
     }
 
-    // ========================= Additions for dialog / flow =========================
-
-    /** Row from original sale to drive "return_qty" input in the dialog. */
-    public static final class SaleLine {
-        public long product_id;
-        public String item_name;
-        public String sku;
-        public double sold_qty;
-        public double unit_price;
-        public double vat_rate;
-        // UI field (not persisted): how much is being returned
-        public double return_qty;
-    }
-
-    /** Minimal line payload used when issuing the CN. */
-    public static final class ItemLine {
-        public long product_id;
-        public String item_name;
-        public String sku;
-        public double qty;
-        public double unit_price;
-        public double vat_rate;
-    }
-
-    /** Load sold lines for a given sale_id (from sale_items). */
+    /** Load sold lines for a given sale_id (from sale_items) to drive CN dialog. */
     public static List<SaleLine> saleItemsForSale(long sale_id) throws SQLException {
         final String sql = """
             SELECT product_id, item_name, sku, qty, unit_price, vat_rate
@@ -205,6 +228,186 @@ public final class CreditNoteDAO {
         try (Connection c = Db.get(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, credit_note_id);
             ps.executeUpdate();
+        }
+    }
+
+    // ========================= Listing helpers (old + new) =========================
+
+    /** Simple list of all credit notes (no EFRIS join). */
+    public static List<Head> listAll() throws SQLException {
+        final String sql =
+            "SELECT id, sale_id, reason, date_time, subtotal, vat_total, total, status, note " +
+            "FROM credit_notes " +
+            "ORDER BY id DESC";
+        try (Connection c = Db.get(); PreparedStatement ps = c.prepareStatement(sql)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                List<Head> out = new ArrayList<>();
+                while (rs.next()) {
+                    Head h = new Head();
+                    h.id        = rs.getLong(1);
+                    h.sale_id   = rs.getLong(2);
+                    h.reason    = rs.getString(3);
+                    h.date_time = rs.getString(4);
+                    h.subtotal  = rs.getDouble(5);
+                    h.vat_total = rs.getDouble(6);
+                    h.total     = rs.getDouble(7);
+                    h.status    = rs.getString(8);
+                    h.note      = rs.getString(9);
+                    out.add(h);
+                }
+                return out;
+            }
+        }
+    }
+
+    /** Old-style join: credit notes + EFRIS (no qty aggregation). Still safe to keep. */
+    public static List<ListRow> listAllWithEfris() throws SQLException {
+        final String sql = """
+            SELECT
+                cn.id,
+                cn.sale_id,
+                cn.reason,
+                cn.date_time,
+                cn.subtotal,
+                cn.vat_total,
+                cn.total,
+                cn.status,
+                ecn.status,
+                ecn.invoice_number,
+                ecn.verification_code,
+                ecn.error_message
+            FROM credit_notes cn
+            LEFT JOIN efris_credit_notes ecn
+              ON ecn.credit_note_id = cn.id
+            ORDER BY cn.id DESC
+            """;
+
+        try (Connection c = Db.get();
+             PreparedStatement ps = c.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            List<ListRow> out = new ArrayList<>();
+            while (rs.next()) {
+                ListRow r = new ListRow();
+                int col = 1;
+                r.id                  = rs.getLong(col++);
+                r.sale_id             = rs.getLong(col++);
+                r.reason              = rs.getString(col++);
+                r.date_time           = rs.getString(col++);
+                r.subtotal            = rs.getDouble(col++);
+                r.vat_total           = rs.getDouble(col++);
+                r.total               = rs.getDouble(col++);
+                // old version didn't aggregate qty → default 0
+                r.total_qty           = 0.0;
+                r.status              = rs.getString(col++);
+                r.efris_status        = rs.getString(col++);
+                r.efris_invoice_number= rs.getString(col++);
+                r.efris_verification  = rs.getString(col++);
+                r.efris_error_message = rs.getString(col++);
+                out.add(r);
+            }
+            return out;
+        }
+    }
+
+    /**
+     * Full-feature listing for the Credit Note List UI.
+     * Includes:
+     *  - All credit note fields
+     *  - Total quantity from items
+     *  - EFRIS tracking (status, invoice number, verification code, error)
+     *  - Optional search (by reason, status, FDN, CN id, sale id)
+     */
+    public static List<ListRow> listForUi(String search) throws SQLException {
+
+        String base = """
+            SELECT
+                cn.id,
+                cn.sale_id,
+                cn.reason,
+                cn.date_time,
+                cn.subtotal,
+                cn.vat_total,
+                cn.total,
+                IFNULL(SUM(cni.qty), 0) AS total_qty,
+                cn.status,
+                ecn.status AS efris_status,
+                ecn.invoice_number,
+                ecn.verification_code,
+                ecn.error_message
+            FROM credit_notes cn
+            LEFT JOIN credit_note_items cni
+                ON cni.credit_note_id = cn.id
+            LEFT JOIN efris_credit_notes ecn
+                ON ecn.credit_note_id = cn.id
+            """;
+
+        boolean filtered = (search != null && !search.isBlank());
+        if (filtered) {
+            base += """
+                WHERE
+                    cn.reason LIKE ? OR
+                    cn.status LIKE ? OR
+                    ecn.invoice_number LIKE ? OR
+                    CAST(cn.id AS TEXT) LIKE ? OR
+                    CAST(cn.sale_id AS TEXT) LIKE ?
+                """;
+        }
+
+        base += """
+            GROUP BY
+                cn.id,
+                cn.sale_id,
+                cn.reason,
+                cn.date_time,
+                cn.subtotal,
+                cn.vat_total,
+                cn.total,
+                cn.status,
+                ecn.status,
+                ecn.invoice_number,
+                ecn.verification_code,
+                ecn.error_message
+            ORDER BY cn.id DESC
+            """;
+
+        try (Connection c = Db.get();
+             PreparedStatement ps = c.prepareStatement(base)) {
+
+            if (filtered) {
+                String q = "%" + search.trim() + "%";
+                ps.setString(1, q);
+                ps.setString(2, q);
+                ps.setString(3, q);
+                ps.setString(4, q);
+                ps.setString(5, q);
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                List<ListRow> list = new ArrayList<>();
+                while (rs.next()) {
+                    ListRow r = new ListRow();
+                    int col = 1;
+
+                    r.id                   = rs.getLong(col++);
+                    r.sale_id              = rs.getLong(col++);
+                    r.reason               = rs.getString(col++);
+                    r.date_time            = rs.getString(col++);
+                    r.subtotal             = rs.getDouble(col++);
+                    r.vat_total            = rs.getDouble(col++);
+                    r.total                = rs.getDouble(col++);
+                    r.total_qty            = rs.getDouble(col++);
+                    r.status               = rs.getString(col++);
+
+                    r.efris_status         = rs.getString(col++);
+                    r.efris_invoice_number = rs.getString(col++);
+                    r.efris_verification   = rs.getString(col++);
+                    r.efris_error_message  = rs.getString(col++);
+
+                    list.add(r);
+                }
+                return list;
+            }
         }
     }
 }

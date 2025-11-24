@@ -19,6 +19,7 @@ public final class EfrisDAO {
         public String verification_code;
         public String created_at;
         public String sent_at;
+        public String invoice_id;
     }
 
     // Upsert PENDING row before hitting EFRIS.
@@ -82,26 +83,28 @@ public final class EfrisDAO {
      * full response JSON + verification code.
      */
     public static void markSent(long saleId,
-                                String responseJson,
-                                String invoiceNumber,
-                                String qrBase64,
-                                String verificationCode) throws SQLException {
+                            String responseJson,
+                            String invoiceId,
+                            String invoiceNumber,
+                            String qrBase64,
+                            String verificationCode) throws SQLException {
 
-        // First ensure basic SENT info is stored
-        markSent(saleId, invoiceNumber, qrBase64);
+    // Store core SENT info first (status + invoice_number + qr)
+    markSent(saleId, invoiceNumber, qrBase64);
 
-        try (Connection c = Db.get();
-             PreparedStatement ps = c.prepareStatement(
-                     "UPDATE efris_invoices " +
-                     "SET response_json=?, verification_code=? " +
-                     "WHERE sale_id=?")) {
+    try (Connection c = Db.get();
+         PreparedStatement ps = c.prepareStatement(
+             "UPDATE efris_invoices " +
+             "SET response_json=?, invoice_id=?, verification_code=? " +
+             "WHERE sale_id=?")) {
 
-            ps.setString(1, responseJson);
-            ps.setString(2, verificationCode);
-            ps.setLong(3, saleId);
-            ps.executeUpdate();
-        }
+        ps.setString(1, responseJson);
+        ps.setString(2, invoiceId);
+        ps.setString(3, verificationCode);
+        ps.setLong(4, saleId);
+        ps.executeUpdate();
     }
+}
 
     /** Optional helper: used by FiscalService if present. */
     public static void updateQr(long saleId, String qrBase64) throws SQLException {
@@ -149,7 +152,7 @@ public final class EfrisDAO {
 
     /** Read by sale_id. Returns null if not found. */
     public static Rec findBySaleId(long saleId) throws SQLException {
-        String sql = "SELECT id, sale_id, status, request_json, response_json, invoice_number, " +
+        String sql = "SELECT id, sale_id, status, request_json, response_json, invoice_id, invoice_number, " +
                      "qr_base64, verification_code, created_at, sent_at " +
                      "FROM efris_invoices WHERE sale_id=?";
         try (Connection c = Db.get();
@@ -164,11 +167,12 @@ public final class EfrisDAO {
                 r.status            = rs.getString(3);
                 r.request_json      = rs.getString(4);
                 r.response_json     = rs.getString(5);
-                r.invoice_number    = rs.getString(6);
-                r.qr_base64         = rs.getString(7);
-                r.verification_code = rs.getString(8);
-                r.created_at        = rs.getString(9);
-                r.sent_at           = rs.getString(10);
+                r.invoice_id        = rs.getString(6);
+                r.invoice_number    = rs.getString(7);
+                r.qr_base64         = rs.getString(8);
+                r.verification_code = rs.getString(9);
+                r.created_at        = rs.getString(10);
+                r.sent_at           = rs.getString(11);
                 return r;
             }
         }

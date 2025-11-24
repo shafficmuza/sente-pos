@@ -1,0 +1,34 @@
+{
+  "data" : {
+    "content" : "eyJzdW1tYXJ5Ijp7InFyQ29kZSI6IiIsIm5ldEFtb3VudCI6MjAwMC4wLCJtb2RlQ29kZSI6IjEiLCJncm9zc0Ftb3VudCI6MjM2MC4wLCJ0YXhBbW91bnQiOjM2MC4wLCJyZW1hcmtzIjoiRXhjZXNzIHNhbGUiLCJpdGVtQ291bnQiOjF9LCJleHRlbmQiOnsicmVhc29uIjoiRXhjZXNzIHNhbGUiLCJyZWFzb25Db2RlIjoiIn0sImJhc2ljSW5mb3JtYXRpb24iOnsib3JpSW52b2ljZUlkIjoiIiwiaXNzdWVkRGF0ZSI6IjIwMjUtMTEtMjQgMDY6MjA6NDEiLCJyZWFzb24iOiJFeGNlc3Mgc2FsZSIsImFudGlmYWtlQ29kZSI6IiIsInBheVdheSI6IjEwMiIsIm9yaUludm9pY2VObyI6IiIsImRldmljZU5vIjoiMTAwMzUwMTUzMl8wMSIsIm9wZXJhdG9yIjoiYWRtaW4iLCJpbnZvaWNlVHlwZSI6IjIiLCJjdXJyZW5jeSI6IlVHWCIsImludm9pY2VLaW5kIjoiMiIsImludm9pY2VObyI6IkNOLTEiLCJkYXRhU291cmNlIjoiMTAzIn0sInNlbGxlckRldGFpbHMiOnsibGVnYWxOYW1lIjoiUHJvIE1lZGlhIFN5c3RlbXMgKFUpIEx0ZCIsInBsYWNlT2ZCdXNpbmVzcyI6IkthbXBhbGEiLCJlbWFpbEFkZHJlc3MiOiJzaGFmZmljbXV6YUB5YWhvby5jb20iLCJhZGRyZXNzIjoiTGV2ZWwgMyBTdWl0ZSA0NjQsIEVxdWF0b3JpYWwgTWFsbCIsImxpbmVQaG9uZSI6IjA3NzUyMDA0NDIiLCJuaW5Ccm4iOiIwMDEiLCJtb2JpbGVQaG9uZSI6IjA3NzUyMDA0NDIiLCJyZWZlcmVuY2VObyI6IkNOLTEiLCJ0aW4iOiIxMDAzNTAxNTMyIiwiYnVzaW5lc3NOYW1lIjoiUHJvIE1lZGlhIFN5c3RlbXMgKFUpIEx0ZCJ9LCJnb29kc0RldGFpbHMiOlt7InVuaXRQcmljZSI6MjAwMC4wLCJpdGVtIjoiR2Vpc2hhIFllbGxvdyAyMjRnbSIsIm9yZGVyTnVtYmVyIjoxLCJ1bml0T2ZNZWFzdXJlIjoiMTAiLCJpdGVtQ29kZSI6IjEyMzQiLCJleGNpc2VGbGFnIjoiMiIsInRheCI6MzYwLjAsImNhdGVnb3J5TmFtZSI6IiIsInRheFJhdGUiOjAuMTgsInRvdGFsIjoyMDAwLjAsImRpc2NvdW50VGF4UmF0ZSI6MC4wLCJnb29kc0NhdGVnb3J5SWQiOiIiLCJkaXNjb3VudEZsYWciOiIyIiwiZ29vZHNDYXRlZ29yeU5hbWUiOiIiLCJxdHkiOjEuMCwiZGVlbWVkRmxhZyI6IjIiLCJjYXRlZ29yeUlkIjoiIn1dLCJ0YXhEZXRhaWxzIjpbeyJleGNpc2VDdXJyZW5jeSI6IlVHWCIsIm5ldEFtb3VudCI6MjAwMC4wLCJleGNpc2VVbml0IjoiIiwiZ3Jvc3NBbW91bnQiOjIzNjAuMCwidGF4QW1vdW50IjozNjAuMCwidGF4Q2F0ZWdvcnkiOiJWQVQifV0sImJ1eWVyRGV0YWlscyI6eyJidXllckxlZ2FsTmFtZSI6IldBTEstSU4gQ1VTVE9NRVIiLCJidXllclR5cGUiOiIxIiwiYnV5ZXJOaW5Ccm4iOiIiLCJidXllclRpbiI6IiJ9fQ==",
+    "signature" : "",
+    "dataDescription" : {
+      "codeType" : "0",
+      "encryptCode" : "0",
+      "zipCode" : "0"
+    }
+  },
+  "globalInfo" : {
+    "appId" : "AP04",
+    "version" : "1.1.20191201",
+    "dataExchangeId" : "56286ffcdb8040648298510f01337e80",
+    "interfaceCode" : "T110",
+    "requestCode" : "TP",
+    "requestTime" : "2025-11-24 06:20:41",
+    "responseCode" : "TA",
+    "userName" : "admin",
+    "deviceMAC" : "FFFFFFFFFFFF",
+    "deviceNo" : "1003501532_01",
+    "tin" : "1003501532",
+    "brn" : "001",
+    "taxpayerID" : "1",
+    "longitude" : "0.0",
+    "latitude" : "0.0",
+    "agentType" : "0",
+    "extendField" : {
+      "responseDateFormat" : "dd/MM/yyyy",
+      "responseTimeFormat" : "dd/MM/yyyy HH:mm:ss"
+    }
+  },
+  "returnStateInfo" : { }
+}

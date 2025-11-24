@@ -52,6 +52,8 @@ public final class EfrisClient {
         public String invoiceNumber;     // invoiceNo / FDN
         public String verificationCode;  // antifakeCode / verification code
         public String qrBase64;          // QR code (base64 string from summary.qrCode)
+        // NEW:
+        public String invoiceId;
     }
 
     // ---------------------------------------------------------------------
@@ -239,6 +241,10 @@ public final class EfrisClient {
                     }
                     if (basic.hasNonNull("antifakeCode")) {
                         r.verificationCode = basic.get("antifakeCode").asText("");
+                    }
+                    // NEW: capture invoiceId
+                    if (basic.hasNonNull("invoiceId")) {
+                        r.invoiceId = basic.get("invoiceId").asText("");
                     }
                 }
 
