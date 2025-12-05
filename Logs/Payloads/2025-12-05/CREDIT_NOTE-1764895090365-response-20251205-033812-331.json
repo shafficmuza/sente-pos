@@ -1,0 +1,37 @@
+{
+  "data" : {
+    "content" : "eyJyZWZlcmVuY2VObyI6IjI2UEwwMjMwMDc3NTQifQ==",
+    "dataDescription" : {
+      "codeType" : "0",
+      "encryptCode" : "2",
+      "zipCode" : "0"
+    },
+    "signature" : "iCa2NzpPuuMWZHuykm/xmVzmTCKW/l1Fjamhy7f2xDSBsHRyO+rM9kBRP+olZW6YLVgJa4kxxSTB6YdG2GaZzBvmuXyd4X2mq+Au/mB5zqrpy6uDsKjFXIzzIox8X/ZbMQValaiPkuDwHpqJwrVAcSepabQzWPkHQdskSd2mXDUema/2oo/j0sJVcmtVUnUktx6UjkrevPQYAOEBzxc1CxtbGMVjxNrx0E+dPlL75hxqqMOwjgxlW5YhXpDywWr5+CSePn74Y5u6KvTr+BCcZQc6pZ34brKdY1m81D8eltHHGOQERSkhMKwBvM47BN/85/+2hoH1FkFuwF8hxXrkvg=="
+  },
+  "globalInfo" : {
+    "agentType" : "0",
+    "appId" : "AP02",
+    "brn" : "001",
+    "dataExchangeId" : "0686eaed08594ca4a88798d08aafa8a1",
+    "deviceMAC" : "FFFFFFFFFFFF",
+    "deviceNo" : "TCS2e9fe9730959608",
+    "extendField" : {
+      "responseDateFormat" : "dd/MM/yyyy",
+      "responseTimeFormat" : "dd/MM/yyyy HH:mm:ss"
+    },
+    "interfaceCode" : "T110",
+    "latitude" : "0.0",
+    "longitude" : "0.0",
+    "requestCode" : "TP",
+    "requestTime" : "2025-12-05 03:38:10",
+    "responseCode" : "TA",
+    "taxpayerID" : "1",
+    "tin" : "1003501532",
+    "userName" : "admin",
+    "version" : "1.1.20191201"
+  },
+  "returnStateInfo" : {
+    "returnCode" : "00",
+    "returnMessage" : "SUCCESS"
+  }
+}

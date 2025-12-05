@@ -1,0 +1,38 @@
+{
+  "data" : {
+    "content" : "",
+    "dataDescription" : {
+      "codeType" : "0",
+      "encryptCode" : "2",
+      "zipCode" : "0"
+    },
+    "signature" : ""
+  },
+  "globalInfo" : {
+    "agentType" : "0",
+    "appId" : "AP02",
+    "brn" : "001",
+    "dataExchangeId" : "3c4cfa432a8b401e8f0dfcb99e2f4f8e",
+    "deviceMAC" : "FFFFFFFFFFFF",
+    "deviceNo" : "TCS2e9fe9730959608",
+    "extendField" : {
+      "referenceNo" : "POS-45",
+      "responseDateFormat" : "dd/MM/yyyy",
+      "responseTimeFormat" : "dd/MM/yyyy HH:mm:ss"
+    },
+    "interfaceCode" : "T109",
+    "latitude" : "0.0",
+    "longitude" : "0.0",
+    "requestCode" : "TP",
+    "requestTime" : "2025-12-05 17:20:44",
+    "responseCode" : "TA",
+    "taxpayerID" : "1",
+    "tin" : "1003501532",
+    "userName" : "admin",
+    "version" : "1.1.20191201"
+  },
+  "returnStateInfo" : {
+    "returnCode" : "1600",
+    "returnMessage" : "Goods/Services Code:BREAD01--Goods/Services Name:BREAD 1KG-->Inventory shortage!"
+  }
+}

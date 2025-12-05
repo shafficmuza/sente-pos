@@ -1,0 +1,37 @@
+{
+  "data" : {
+    "content" : "",
+    "dataDescription" : {
+      "codeType" : "0",
+      "encryptCode" : "2",
+      "zipCode" : "0"
+    },
+    "signature" : ""
+  },
+  "globalInfo" : {
+    "agentType" : "0",
+    "appId" : "AP02",
+    "brn" : "001",
+    "dataExchangeId" : "cb014b33b31348d7b2ed55fbea1cda83",
+    "deviceMAC" : "FFFFFFFFFFFF",
+    "deviceNo" : "TCS2e9fe9730959608",
+    "extendField" : {
+      "responseDateFormat" : "dd/MM/yyyy",
+      "responseTimeFormat" : "dd/MM/yyyy HH:mm:ss"
+    },
+    "interfaceCode" : "T110",
+    "latitude" : "0.0",
+    "longitude" : "0.0",
+    "requestCode" : "TP",
+    "requestTime" : "2025-12-05 03:30:45",
+    "responseCode" : "TA",
+    "taxpayerID" : "1",
+    "tin" : "1003501532",
+    "userName" : "admin",
+    "version" : "1.1.20191201"
+  },
+  "returnStateInfo" : {
+    "returnCode" : "2197",
+    "returnMessage" : "Some items details are inconsistent with the goods maintenance.(BREAD 1KG's unit of measure does not match)"
+  }
+}

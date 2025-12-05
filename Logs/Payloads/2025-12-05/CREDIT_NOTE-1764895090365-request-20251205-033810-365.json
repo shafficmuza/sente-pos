@@ -1,0 +1,34 @@
+{
+  "data" : {
+    "content" : "eyJvcmlJbnZvaWNlSWQiOiIyMDM0MDIzNTgxNzgwMTAwNDQiLCJvcmlJbnZvaWNlTm8iOiIzMjUwNDI3NTQwNTkiLCJyZWFzb25Db2RlIjoiMTA1IiwicmVhc29uIjoiZXhjZXNzIiwiYXBwbGljYXRpb25UaW1lIjoiMjAyNS0xMi0wNSAwMzozODoxMCIsImludm9pY2VBcHBseUNhdGVnb3J5Q29kZSI6IjEwMSIsImN1cnJlbmN5IjoiVUdYIiwiY29udGFjdE5hbWUiOiJQcm8gTWVkaWEgU3lzdGVtcyAoVSkgTHRkIiwiY29udGFjdE1vYmlsZU51bSI6IjI1Njc3NTIwMDQ0MiIsImNvbnRhY3RFbWFpbCI6InNoYWZmaWNtdXphQHlhaG9vLmNvbSIsInNvdXJjZSI6IjEwNiIsInJlbWFya3MiOiJleGNlc3MiLCJzZWxsZXJzUmVmZXJlbmNlTm8iOiIzMjUwNDI3NTQwNTkiLCJnb29kc0RldGFpbHMiOlt7Iml0ZW0iOiJDQUtFIFNNQUxMIiwiaXRlbUNvZGUiOiJDQUtFMDAxIiwidW5pdE9mTWVhc3VyZSI6IlBDRSIsInVuaXRQcmljZSI6IjIwMDAiLCJkZWVtZWRGbGFnIjoiMiIsImRpc2NvdW50RmxhZyI6IjIiLCJleGNpc2VGbGFnIjoiMiIsImNhdGVnb3J5SWQiOiIiLCJjYXRlZ29yeU5hbWUiOiIiLCJnb29kc0NhdGVnb3J5SWQiOiIiLCJnb29kc0NhdGVnb3J5TmFtZSI6IiIsImV4Y2lzZVJhdGUiOiIiLCJleGNpc2VSdWxlIjoiIiwiZXhjaXNlVGF4IjoiMCIsInBhY2siOiIiLCJzdGljayI6IiIsImV4Y2lzZVVuaXQiOiIiLCJleGNpc2VDdXJyZW5jeSI6IiIsImV4Y2lzZVJhdGVOYW1lIjoiIiwidmF0QXBwbGljYWJsZUZsYWciOiIxIiwidGF4UmF0ZSI6IjAuMTgiLCJxdHkiOi02LjAsInRvdGFsIjotMTIwMDAuMCwidGF4IjotMjE2MC4wLCJkaXNjb3VudFRvdGFsIjoiIiwiZGlzY291bnRUYXhSYXRlIjoiIiwib3JkZXJOdW1iZXIiOiIxIn1dLCJ0YXhEZXRhaWxzIjpbeyJ0YXhDYXRlZ29yeUNvZGUiOiIwMSIsIm5ldEFtb3VudCI6LTEyMDAwLjAsInRheFJhdGUiOiIwLjE4IiwidGF4QW1vdW50IjotMjE2MC4wLCJncm9zc0Ftb3VudCI6LTE0MTYwLjAsImV4Y2lzZVVuaXQiOiIiLCJleGNpc2VDdXJyZW5jeSI6IlVHWCIsInRheFJhdGVOYW1lIjoiIn1dLCJzdW1tYXJ5Ijp7Im5ldEFtb3VudCI6LTEyMDAwLjAsInRheEFtb3VudCI6LTIxNjAuMCwiZ3Jvc3NBbW91bnQiOi0xNDE2MC4wLCJpdGVtQ291bnQiOjEsIm1vZGVDb2RlIjoiMCIsInFyQ29kZSI6IiIsInJlbWFya3MiOiJleGNlc3MifSwicGF5V2F5IjpbeyJwYXltZW50TW9kZSI6IjEwMiIsInBheW1lbnRBbW91bnQiOiIxNDE2MC4wIiwib3JkZXJOdW1iZXIiOiJhIn1dLCJidXllckRldGFpbHMiOnsiYnV5ZXJMZWdhbE5hbWUiOiJXQUxLLUlOIENVU1RPTUVSIiwiYnV5ZXJUeXBlIjoiMSIsImRhdGVGb3JtYXQiOiJkZC9NTS95eXl5Iiwibm93VGltZSI6IjIwMjUvMTIvMDUgMDM6Mzc6NTUiLCJwYWdlSW5kZXgiOjAsInBhZ2VObyI6MCwicGFnZVNpemUiOjAsInRpbWVGb3JtYXQiOiJkZC9NTS95eXl5IEhIMjQ6bWk6c3MifSwiaW1wb3J0U2VydmljZXNTZWxsZXIiOnsiaW1wb3J0QnVzaW5lc3NOYW1lIjoiIiwiaW1wb3J0RW1haWxBZGRyZXNzIjoiIiwiaW1wb3J0Q29udGFjdE51bWJlciI6IiIsImltcG9ydEFkZHJlc3MiOiIiLCJpbXBvcnRJbnZvaWNlRGF0ZSI6IjIwMjUtMTItMDUiLCJpbXBvcnRBdHRhY2htZW50TmFtZSI6IiIsImltcG9ydEF0dGFjaG1lbnRDb250ZW50IjoiIn0sImJhc2ljSW5mb3JtYXRpb24iOnsib3BlcmF0b3IiOiJhZG1pbiIsImludm9pY2VLaW5kIjoiMiIsImludm9pY2VJbmR1c3RyeUNvZGUiOiIxMDEiLCJicmFuY2hJZCI6IjAwMSJ9LCJhdHRhY2htZW50TGlzdCI6W119",
+    "signature" : "",
+    "dataDescription" : {
+      "codeType" : "0",
+      "encryptCode" : "0",
+      "zipCode" : "0"
+    }
+  },
+  "globalInfo" : {
+    "appId" : "AP04",
+    "version" : "1.1.20191201",
+    "dataExchangeId" : "0686eaed08594ca4a88798d08aafa8a1",
+    "interfaceCode" : "T110",
+    "requestCode" : "TP",
+    "requestTime" : "2025-12-05 03:38:10",
+    "responseCode" : "TA",
+    "userName" : "admin",
+    "deviceMAC" : "FFFFFFFFFFFF",
+    "deviceNo" : "TCS2e9fe9730959608",
+    "tin" : "1003501532",
+    "brn" : "001",
+    "taxpayerID" : "1",
+    "longitude" : "0.0",
+    "latitude" : "0.0",
+    "agentType" : "0",
+    "extendField" : {
+      "responseDateFormat" : "dd/MM/yyyy",
+      "responseTimeFormat" : "dd/MM/yyyy HH:mm:ss"
+    }
+  },
+  "returnStateInfo" : { }
+}

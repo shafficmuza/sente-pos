@@ -1,0 +1,34 @@
+{
+  "data" : {
+    "content" : "eyJzdW1tYXJ5Ijp7InFyQ29kZSI6IiIsIm5ldEFtb3VudCI6MTYwMDAuMCwibW9kZUNvZGUiOiIwIiwiZ3Jvc3NBbW91bnQiOjE4ODgwLjAsInRheEFtb3VudCI6Mjg4MC4wLCJyZW1hcmtzIjoiUE9TIHNhbGUiLCJpdGVtQ291bnQiOjF9LCJleHRlbmQiOnsicmVhc29uIjoiIiwicmVhc29uQ29kZSI6IiJ9LCJiYXNpY0luZm9ybWF0aW9uIjp7Im9yaUludm9pY2VJZCI6IiIsImlzc3VlZERhdGUiOiIyMDI1LTEyLTA1IDAzOjM3OjA3IiwiYW50aWZha2VDb2RlIjoiIiwiaW52b2ljZVR5cGUiOiIxIiwicGF5V2F5IjoiMTAyIiwiY3VycmVuY3kiOiJVR1giLCJkZXZpY2VObyI6IlRDUzJlOWZlOTczMDk1OTYwOCIsImludm9pY2VLaW5kIjoiMiIsImludm9pY2VObyI6IklOVi00NCIsImRhdGFTb3VyY2UiOiIxMDMiLCJvcGVyYXRvciI6ImFkbWluIn0sInNlbGxlckRldGFpbHMiOnsibGVnYWxOYW1lIjoiUHJvIE1lZGlhIFN5c3RlbXMgKFUpIEx0ZCIsInBsYWNlT2ZCdXNpbmVzcyI6IkthbXBhbGEiLCJlbWFpbEFkZHJlc3MiOiJzaGFmZmljbXV6YUB5YWhvby5jb20iLCJhZGRyZXNzIjoiRXF1YXRvcmlhbCBNYWxsIExldmVsIDMgU3VpdGUgNDY0IiwibGluZVBob25lIjoiMjU2Nzc1MjAwNDQyIiwibmluQnJuIjoiMDAxIiwibW9iaWxlUGhvbmUiOiIyNTY3NzUyMDA0NDIiLCJyZWZlcmVuY2VObyI6IlBPUy00NCIsInRpbiI6IjEwMDM1MDE1MzIiLCJidXNpbmVzc05hbWUiOiJQcm8gTWVkaWEgU3lzdGVtcyAoVSkgTHRkIn0sImdvb2RzRGV0YWlscyI6W3sidW5pdFByaWNlIjoyMDAwLjAsIml0ZW0iOiJDQUtFIFNNQUxMIiwib3JkZXJOdW1iZXIiOjEsInVuaXRPZk1lYXN1cmUiOiJQQ0UiLCJpdGVtQ29kZSI6IkNBS0UwMDEiLCJleGNpc2VGbGFnIjoiMiIsInRheCI6Mjg4MC4wLCJjYXRlZ29yeU5hbWUiOiIiLCJ0YXhSYXRlIjowLjE4LCJ0b3RhbCI6MTYwMDAuMCwiZGlzY291bnRUYXhSYXRlIjowLjAsImdvb2RzQ2F0ZWdvcnlJZCI6IiIsImRpc2NvdW50RmxhZyI6IjIiLCJnb29kc0NhdGVnb3J5TmFtZSI6IiIsInF0eSI6OC4wLCJkZWVtZWRGbGFnIjoiMiIsImNhdGVnb3J5SWQiOiIifV0sInRheERldGFpbHMiOlt7ImV4Y2lzZUN1cnJlbmN5IjoiVUdYIiwibmV0QW1vdW50IjoxNjAwMC4wLCJleGNpc2VVbml0IjoiIiwiZ3Jvc3NBbW91bnQiOjE4ODgwLjAsInRheEFtb3VudCI6Mjg4MC4wLCJ0YXhDYXRlZ29yeSI6IlZBVCJ9XSwiYnV5ZXJEZXRhaWxzIjp7ImJ1eWVyUGxhY2VPZkJ1c2kiOiIiLCJidXllckxlZ2FsTmFtZSI6IldBTEstSU4gQ1VTVE9NRVIiLCJidXllckVtYWlsIjoiIiwiYnV5ZXJTZWN0b3IiOiIiLCJidXllclJlZmVyZW5jZU5vIjoiIiwiYnV5ZXJUaW4iOiIiLCJidXllclBhc3Nwb3J0TnVtIjoiIiwiYnV5ZXJCdXNpbmVzc05hbWUiOiIiLCJidXllckFkZHJlc3MiOiIiLCJidXllclR5cGUiOiIxIiwiYnV5ZXJOaW5Ccm4iOiIiLCJidXllck1vYmlsZVBob25lIjoiIiwiYnV5ZXJDaXRpemVuc2hpcCI6IiIsImJ1eWVyTGluZVBob25lIjoiIn19",
+    "signature" : "",
+    "dataDescription" : {
+      "codeType" : "0",
+      "encryptCode" : "0",
+      "zipCode" : "0"
+    }
+  },
+  "globalInfo" : {
+    "appId" : "AP04",
+    "version" : "1.1.20191201",
+    "dataExchangeId" : "c5760e16ec58433889bbb06f12819407",
+    "interfaceCode" : "T109",
+    "requestCode" : "TP",
+    "requestTime" : "2025-12-05 03:37:07",
+    "responseCode" : "TA",
+    "userName" : "admin",
+    "deviceMAC" : "FFFFFFFFFFFF",
+    "deviceNo" : "TCS2e9fe9730959608",
+    "tin" : "1003501532",
+    "brn" : "001",
+    "taxpayerID" : "1",
+    "longitude" : "0.0",
+    "latitude" : "0.0",
+    "agentType" : "0",
+    "extendField" : {
+      "responseDateFormat" : "dd/MM/yyyy",
+      "responseTimeFormat" : "dd/MM/yyyy HH:mm:ss"
+    }
+  },
+  "returnStateInfo" : { }
+}
