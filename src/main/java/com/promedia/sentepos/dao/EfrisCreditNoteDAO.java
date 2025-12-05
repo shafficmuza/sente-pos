@@ -15,6 +15,7 @@ public final class EfrisCreditNoteDAO {
         public String request_json;
         public String response_json;
         public String invoice_number;
+        public String reference_number;   // NEW
         public String qr_base64;
         public String verification_code;
         public String error_message;
@@ -38,7 +39,8 @@ public final class EfrisCreditNoteDAO {
                 try (PreparedStatement upd = c.prepareStatement(
                         "UPDATE efris_credit_notes " +
                         "SET status='PENDING', request_json=?, response_json=NULL, " +
-                        "    invoice_number=NULL, qr_base64=NULL, verification_code=NULL, " +
+                        "    invoice_number=NULL, reference_number=NULL, " + // NEW
+                        "    qr_base64=NULL, verification_code=NULL, " +
                         "    error_message=NULL, sent_at=NULL " +
                         "WHERE credit_note_id=?")) {
 
@@ -56,20 +58,22 @@ public final class EfrisCreditNoteDAO {
                                 String responseJson,
                                 String invoiceNumber,
                                 String qrBase64,
-                                String verificationCode) throws SQLException {
+                                String verificationCode,
+                                String referenceNumber) throws SQLException {   // NEW param
         try (Connection c = Db.get();
              PreparedStatement ps = c.prepareStatement(
                      "UPDATE efris_credit_notes " +
                      "SET status='SENT', response_json=?, invoice_number=?, " +
-                     "    qr_base64=?, verification_code=?, error_message=NULL, " +
-                     "    sent_at=datetime('now') " +
+                     "    reference_number=?, qr_base64=?, verification_code=?, " +
+                     "    error_message=NULL, sent_at=datetime('now') " +
                      "WHERE credit_note_id=?")) {
 
             ps.setString(1, responseJson);
             ps.setString(2, invoiceNumber);
-            ps.setString(3, qrBase64);
-            ps.setString(4, verificationCode);
-            ps.setLong(5, creditNoteId);
+            ps.setString(3, referenceNumber);
+            ps.setString(4, qrBase64);
+            ps.setString(5, verificationCode);
+            ps.setLong(6, creditNoteId);
             ps.executeUpdate();
         }
     }
@@ -98,8 +102,8 @@ public final class EfrisCreditNoteDAO {
     public static Rec findByCreditNoteId(long creditNoteId) throws SQLException {
         final String sql =
             "SELECT id, credit_note_id, status, request_json, response_json," +
-            "       invoice_number, qr_base64, verification_code, error_message," +
-            "       created_at, sent_at " +
+            "       invoice_number, reference_number, qr_base64, verification_code," +
+            "       error_message, created_at, sent_at " +
             "FROM efris_credit_notes WHERE credit_note_id=?";
         try (Connection c = Db.get();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -114,11 +118,12 @@ public final class EfrisCreditNoteDAO {
                 r.request_json      = rs.getString(4);
                 r.response_json     = rs.getString(5);
                 r.invoice_number    = rs.getString(6);
-                r.qr_base64         = rs.getString(7);
-                r.verification_code = rs.getString(8);
-                r.error_message     = rs.getString(9);
-                r.created_at        = rs.getString(10);
-                r.sent_at           = rs.getString(11);
+                r.reference_number  = rs.getString(7);
+                r.qr_base64         = rs.getString(8);
+                r.verification_code = rs.getString(9);
+                r.error_message     = rs.getString(10);
+                r.created_at        = rs.getString(11);
+                r.sent_at           = rs.getString(12);
                 return r;
             }
         }

@@ -206,8 +206,28 @@ public final class Migrations {
           + " error_message TEXT,"
           + " created_at TEXT DEFAULT (datetime('now')),"
           + " sent_at TEXT,"
+          + "reference_number TEXT,"
           + " FOREIGN KEY (credit_note_id) REFERENCES credit_notes(id) ON DELETE CASCADE"
           + ");";
+        
+        // --- MEASURE UNITS (UOM dictionary from EFRIS) ---
+            final String measureUnits =
+                "CREATE TABLE IF NOT EXISTS measure_units ("
+              + " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+              + " code TEXT NOT NULL UNIQUE,"       // EFRIS UOM code (e.g. 10, KG, PP, PCS)
+              + " name TEXT NOT NULL,"              //Human friendly name (e.g. Piece, Kilogram)
+              + " active INTEGER NOT NULL DEFAULT 1,"
+              + " created_at TEXT DEFAULT (datetime('now'))"
+              + ");";
+
+final String idxMeasureUnitsCode =
+    "CREATE INDEX IF NOT EXISTS idx_measure_units_code ON measure_units(code);";
+
+// Seed default 'Piece' if table is empty
+final String seedMeasureUnits =
+    "INSERT INTO measure_units(code, name, active) "
+  + "SELECT '10', 'Piece', 1 "
+  + "WHERE NOT EXISTS (SELECT 1 FROM measure_units);";
 
         final String idxCnSale = "CREATE INDEX IF NOT EXISTS idx_credit_notes_sale ON credit_notes(sale_id);";
         final String idxCnStatus = "CREATE INDEX IF NOT EXISTS idx_efris_credit_notes_status ON efris_credit_notes(status);";
@@ -245,10 +265,14 @@ public final class Migrations {
             st.execute(efrisCreditNotes);
             st.execute(idxCnSale);
             st.execute(idxCnStatus);
-            
+            st.execute(measureUnits);
+            st.execute(idxMeasureUnitsCode);
+            st.execute(seedMeasureUnits);
+
             // Backfill missing columns for existing installs (safe no-op on fresh DBs)
             addColumnIfMissing(c, "efris_invoices", "verification_code", "TEXT");
-            addColumnIfMissing(c, "efris_invoices", "invoice_id", "TEXT"); 
+            addColumnIfMissing(c, "efris_invoices", "invoice_id", "TEXT");
+             addColumnIfMissing(c, "efris_credit_notes", "reference_number", "TEXT");
             
         } catch (SQLException e) {
             throw new RuntimeException("DB migration failed", e);

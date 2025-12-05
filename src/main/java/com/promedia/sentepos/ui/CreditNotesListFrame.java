@@ -62,8 +62,8 @@ public class CreditNotesListFrame extends JFrame {
         table.setAutoCreateRowSorter(true); // allow sorting
 
         // Wider columns for messages
-        table.getColumnModel().getColumn(0).setPreferredWidth(70);   // CN No
-        table.getColumnModel().getColumn(1).setPreferredWidth(70);   // Sale ID
+        table.getColumnModel().getColumn(0).setPreferredWidth(30);   // CN No
+        table.getColumnModel().getColumn(1).setPreferredWidth(30);   // Sale ID
         table.getColumnModel().getColumn(2).setPreferredWidth(150);  // Reason
         table.getColumnModel().getColumn(3).setPreferredWidth(140);  // Date
         table.getColumnModel().getColumn(4).setPreferredWidth(80);   // Status

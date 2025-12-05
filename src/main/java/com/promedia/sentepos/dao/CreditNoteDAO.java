@@ -44,9 +44,10 @@ public final class CreditNoteDAO {
 
         // EFRIS tracking (from efris_credit_notes)
         public String efris_status;            // PENDING/SENT/FAILED/CANCELLED
-        public String efris_invoice_number;    // FDN from URA
+        public String efris_invoice_number;    // FDN from URA (for CN: invoiceNo when approved)
         public String efris_verification;      // verification_code
         public String efris_error_message;     // last return/error message
+        public String reference_number;        // EFRIS credit note referenceNo (DB column reference_number)
     }
 
     /** Row from original sale to drive "return_qty" input in the dialog. */
@@ -275,7 +276,8 @@ public final class CreditNoteDAO {
                 ecn.status,
                 ecn.invoice_number,
                 ecn.verification_code,
-                ecn.error_message
+                ecn.error_message,
+                ecn.reference_number
             FROM credit_notes cn
             LEFT JOIN efris_credit_notes ecn
               ON ecn.credit_note_id = cn.id
@@ -290,20 +292,21 @@ public final class CreditNoteDAO {
             while (rs.next()) {
                 ListRow r = new ListRow();
                 int col = 1;
-                r.id                  = rs.getLong(col++);
-                r.sale_id             = rs.getLong(col++);
-                r.reason              = rs.getString(col++);
-                r.date_time           = rs.getString(col++);
-                r.subtotal            = rs.getDouble(col++);
-                r.vat_total           = rs.getDouble(col++);
-                r.total               = rs.getDouble(col++);
+                r.id                   = rs.getLong(col++);
+                r.sale_id              = rs.getLong(col++);
+                r.reason               = rs.getString(col++);
+                r.date_time            = rs.getString(col++);
+                r.subtotal             = rs.getDouble(col++);
+                r.vat_total            = rs.getDouble(col++);
+                r.total                = rs.getDouble(col++);
                 // old version didn't aggregate qty → default 0
-                r.total_qty           = 0.0;
-                r.status              = rs.getString(col++);
-                r.efris_status        = rs.getString(col++);
-                r.efris_invoice_number= rs.getString(col++);
-                r.efris_verification  = rs.getString(col++);
-                r.efris_error_message = rs.getString(col++);
+                r.total_qty            = 0.0;
+                r.status               = rs.getString(col++);
+                r.efris_status         = rs.getString(col++);
+                r.efris_invoice_number = rs.getString(col++);
+                r.efris_verification   = rs.getString(col++);
+                r.efris_error_message  = rs.getString(col++);
+                r.reference_number     = rs.getString(col++);
                 out.add(r);
             }
             return out;
@@ -315,8 +318,8 @@ public final class CreditNoteDAO {
      * Includes:
      *  - All credit note fields
      *  - Total quantity from items
-     *  - EFRIS tracking (status, invoice number, verification code, error)
-     *  - Optional search (by reason, status, FDN, CN id, sale id)
+     *  - EFRIS tracking (status, invoice number, verification code, error, reference number)
+     *  - Optional search (by reason, status, FDN, reference, CN id, sale id)
      */
     public static List<ListRow> listForUi(String search) throws SQLException {
 
@@ -334,7 +337,8 @@ public final class CreditNoteDAO {
                 ecn.status AS efris_status,
                 ecn.invoice_number,
                 ecn.verification_code,
-                ecn.error_message
+                ecn.error_message,
+                ecn.reference_number
             FROM credit_notes cn
             LEFT JOIN credit_note_items cni
                 ON cni.credit_note_id = cn.id
@@ -349,6 +353,7 @@ public final class CreditNoteDAO {
                     cn.reason LIKE ? OR
                     cn.status LIKE ? OR
                     ecn.invoice_number LIKE ? OR
+                    ecn.reference_number LIKE ? OR
                     CAST(cn.id AS TEXT) LIKE ? OR
                     CAST(cn.sale_id AS TEXT) LIKE ?
                 """;
@@ -367,7 +372,8 @@ public final class CreditNoteDAO {
                 ecn.status,
                 ecn.invoice_number,
                 ecn.verification_code,
-                ecn.error_message
+                ecn.error_message,
+                ecn.reference_number
             ORDER BY cn.id DESC
             """;
 
@@ -381,6 +387,7 @@ public final class CreditNoteDAO {
                 ps.setString(3, q);
                 ps.setString(4, q);
                 ps.setString(5, q);
+                ps.setString(6, q);
             }
 
             try (ResultSet rs = ps.executeQuery()) {
@@ -403,6 +410,7 @@ public final class CreditNoteDAO {
                     r.efris_invoice_number = rs.getString(col++);
                     r.efris_verification   = rs.getString(col++);
                     r.efris_error_message  = rs.getString(col++);
+                    r.reference_number     = rs.getString(col++);
 
                     list.add(r);
                 }

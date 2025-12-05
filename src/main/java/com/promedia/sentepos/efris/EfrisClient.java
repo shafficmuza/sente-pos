@@ -22,6 +22,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+// NEW: for gzip decoding
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.util.zip.GZIPInputStream;
+// New for UOM
+import com.promedia.sentepos.dao.UomDAO;
+import com.promedia.sentepos.model.Uom;
+
 public final class EfrisClient {
 
     /** Local TCS / Offline Enabler URL (NOT URA cloud). */
@@ -52,8 +60,12 @@ public final class EfrisClient {
         public String invoiceNumber;     // invoiceNo / FDN
         public String verificationCode;  // antifakeCode / verification code
         public String qrBase64;          // QR code (base64 string from summary.qrCode)
+
         // NEW:
         public String invoiceId;
+        /** Full decoded "content" JSON from T108/T109/T110/T115, etc. */
+        public String innerContentJson;
+        public String referenceNumber;
     }
 
     // ---------------------------------------------------------------------
@@ -80,7 +92,7 @@ public final class EfrisClient {
 
     /**
      * Fiscalise a CREDIT NOTE via OFFLINE TCS.
-     * We still use T109 – the inner JSON differentiates credit note vs invoice.
+     * Credit note upload = T110.
      */
     public Result sendCreditNoteJson(String innerCreditNoteJson,
                                      String endpoint,
@@ -93,8 +105,7 @@ public final class EfrisClient {
 
     /**
      * Cancel/void a CREDIT NOTE (or invoice) via OFFLINE TCS.
-     * You can adjust interfaceCode if your spec says otherwise (e.g. T110),
-     * but we keep T109 for now – inner JSON carries the cancel instruction.
+     * Credit note cancellation = T111.
      */
     public Result sendCreditNoteCancelJson(String innerCancelJson,
                                            String endpoint,
@@ -103,6 +114,41 @@ public final class EfrisClient {
                                            String deviceNo) throws Exception {
         // Credit note cancellation = T111
         return sendToEnabler(innerCancelJson, "T111", "CREDIT_NOTE_CANCEL", deviceNo);
+    }
+
+    /**
+     * Query original invoice via T108 (invoice query).
+     * The returned Result will have innerContentJson = decoded original invoice JSON.
+     */
+    public Result queryInvoiceT108(String invoiceId,
+                                   String invoiceNo,
+                                   String deviceNoOverride) throws Exception {
+
+        ObjectNode inner = MAPPER.createObjectNode();
+        if (invoiceId != null && !invoiceId.isBlank()) {
+            inner.put("invoiceId", invoiceId);
+        }
+        if (invoiceNo != null && !invoiceNo.isBlank()) {
+            inner.put("invoiceNo", invoiceNo);
+        }
+
+        String innerJson = MAPPER.writeValueAsString(inner);
+
+        // T108: invoice query
+        return sendToEnabler(innerJson, "T108", "INVOICE_QUERY", deviceNoOverride);
+    }
+
+    /**
+     * Fetch Unit of Measure dictionary from EFRIS (Offline Enabler).
+     * Interface: T115 – System dictionary (you may refine inner JSON based on docs).
+     */
+    public Result fetchUnitOfMeasureDictionary(String deviceNoOverride) throws Exception {
+        // Many implementations accept {} to mean "all UOMs".
+        // If your doc requires extra fields (e.g. { "categoryCode": "UOM" }),
+        // adjust here.
+        String innerJson = "{}";
+
+        return sendToEnabler(innerJson, "T115", "UOM_DICT", deviceNoOverride);
     }
 
     // ---------------------------------------------------------------------
@@ -131,7 +177,7 @@ public final class EfrisClient {
         String longitude = DEFAULT_LONGITUDE;
         String latitude  = DEFAULT_LATITUDE;
 
-        // ----------------- Build OFFLINE envelope (like EfrisInvoiceSender) -----------------
+        // ----------------- Build OFFLINE envelope -----------------
         String contentB64 = Base64.getEncoder()
                 .encodeToString(innerJson.getBytes(StandardCharsets.UTF_8));
 
@@ -142,7 +188,7 @@ public final class EfrisClient {
         ObjectNode dataDesc = MAPPER.createObjectNode();
         dataDesc.put("codeType", "0");    // 0 = JSON/plain
         dataDesc.put("encryptCode", "0"); // 0 = no encryption
-        dataDesc.put("zipCode", "0");     // 0 = no compression
+        dataDesc.put("zipCode", "0");     // 0 = no compression (request)
         data.set("dataDescription", dataDesc);
 
         ObjectNode global = MAPPER.createObjectNode();
@@ -189,7 +235,6 @@ public final class EfrisClient {
         AppLog.blobInPayloads(ref, "response", prettyOrRaw(body));
 
         // ----------------- Parse result -----------------
-                // ----------------- Parse result -----------------
         Result r = new Result();
         r.rawRequest  = requestJson;
         r.rawResponse = body;
@@ -217,43 +262,66 @@ public final class EfrisClient {
             if (dataNode != null && dataNode.hasNonNull("content")) {
                 String respContentB64 = dataNode.get("content").asText("");
                 if (!respContentB64.isEmpty()) {
-                    innerRespJson = new String(
-                            Base64.getDecoder().decode(respContentB64),
-                            StandardCharsets.UTF_8
-                    );
+                    byte[] raw = Base64.getDecoder().decode(respContentB64);
+
+                    // Look at zipCode flag (server may gzip)
+                    String zipCode = "0";
+                    JsonNode desc = dataNode.get("dataDescription");
+                    if (desc != null && desc.hasNonNull("zipCode")) {
+                        zipCode = desc.get("zipCode").asText("0");
+                    }
+
+                    if ("1".equals(zipCode) || looksLikeGzip(raw)) {
+                        innerRespJson = gunzip(raw);
+                    } else {
+                        innerRespJson = new String(raw, StandardCharsets.UTF_8);
+                    }
+
                     AppLog.blobInPayloads(ref, "inner-response", prettyOrRaw(innerRespJson));
                 }
             }
 
+            
             if (innerRespJson != null && !innerRespJson.isBlank()) {
-                JsonNode inv = MAPPER.readTree(innerRespJson);
-                JsonNode basic   = inv.get("basicInformation");
-                JsonNode summary = inv.get("summary");
+            r.innerContentJson = innerRespJson;
 
-                if (basic != null) {
-                    if (basic.hasNonNull("invoiceNo")) {
-                        r.invoiceNumber = basic.get("invoiceNo").asText("");
-                    }
-                    // some responses use fdn
-                    if ((r.invoiceNumber == null || r.invoiceNumber.isBlank())
-                            && basic.hasNonNull("fdn")) {
-                        r.invoiceNumber = basic.get("fdn").asText("");
-                    }
-                    if (basic.hasNonNull("antifakeCode")) {
-                        r.verificationCode = basic.get("antifakeCode").asText("");
-                    }
-                    // NEW: capture invoiceId
-                    if (basic.hasNonNull("invoiceId")) {
-                        r.invoiceId = basic.get("invoiceId").asText("");
-                    }
+            JsonNode inv     = MAPPER.readTree(innerRespJson);
+            JsonNode basic   = inv.get("basicInformation");
+            JsonNode summary = inv.get("summary");
+
+            // --- referenceNo (for credit notes) ---
+            if (inv.hasNonNull("referenceNo")) {
+                r.referenceNumber = inv.get("referenceNo").asText("");
+            }
+            if (basic != null && basic.hasNonNull("referenceNo")
+                    && (r.referenceNumber == null || r.referenceNumber.isBlank())) {
+                r.referenceNumber = basic.get("referenceNo").asText("");
+            }
+
+            // --- invoiceNo / fdn / antifakeCode / invoiceId ---
+            if (basic != null) {
+                if (basic.hasNonNull("invoiceNo")) {
+                    r.invoiceNumber = basic.get("invoiceNo").asText("");
                 }
-
-                if (summary != null) {
-                    // look for any reasonable QR field name
-                    r.qrBase64 = firstNonEmpty(summary,
-                            "qrCode", "QRCode", "qrCodeStr", "qrCodeBase64");
+                // some responses use fdn
+                if ((r.invoiceNumber == null || r.invoiceNumber.isBlank())
+                        && basic.hasNonNull("fdn")) {
+                    r.invoiceNumber = basic.get("fdn").asText("");
+                }
+                if (basic.hasNonNull("antifakeCode")) {
+                    r.verificationCode = basic.get("antifakeCode").asText("");
+                }
+                if (basic.hasNonNull("invoiceId")) {
+                    r.invoiceId = basic.get("invoiceId").asText("");
                 }
             }
+
+            
+            if (summary != null) {
+                r.qrBase64 = firstNonEmpty(summary,
+                        "qrCode", "QRCode", "qrCodeStr", "qrCodeBase64");
+            }
+        }
 
             AppLog.ok("efris", ref, "Offline TCS OK, invoiceNo=" + r.invoiceNumber);
 
@@ -267,7 +335,7 @@ public final class EfrisClient {
     }
 
     // ---------------------------------------------------------------------
-    // HTTP + helpers (same idea as your EfrisInvoiceSender)
+    // HTTP + helpers
     // ---------------------------------------------------------------------
 
     private static class HttpResult {
@@ -321,8 +389,8 @@ public final class EfrisClient {
             return maybeJson;
         }
     }
-    
-        /** Return first non-empty child from the given JSON node. */
+
+    /** Return first non-empty child from the given JSON node. */
     private static String firstNonEmpty(JsonNode node, String... names) {
         if (node == null) return null;
         for (String n : names) {
@@ -332,5 +400,86 @@ public final class EfrisClient {
             }
         }
         return null;
+    }
+
+    // ---------------------------------------------------------------------
+    // GZIP helpers for data.content
+    // ---------------------------------------------------------------------
+
+    /** Quick check for GZIP header 1F 8B. */
+    private static boolean looksLikeGzip(byte[] data) {
+        return data != null
+                && data.length >= 2
+                && data[0] == (byte) 0x1F
+                && data[1] == (byte) 0x8B;
+    }
+
+    /** Gunzip a byte[] into a UTF-8 string. */
+    private static String gunzip(byte[] data) throws Exception {
+        try (GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(data));
+             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            byte[] buf = new byte[4096];
+            int n;
+            while ((n = gis.read(buf)) >= 0) {
+                baos.write(buf, 0, n);
+            }
+            return baos.toString(StandardCharsets.UTF_8);
+        }
+    }
+    
+        /**
+     * Call T115 via Offline Enabler, read "rateUnit" from innerContentJson
+     * and save all UOMs into efris_uom table.
+     *
+     * Returns number of UOM entries processed.
+     */
+    public int syncUomDictionaryToDb(String deviceNoOverride) throws Exception {
+        // 1) Call T115 (System dictionary) – we already wrote this wrapper.
+        Result r = fetchUnitOfMeasureDictionary(deviceNoOverride);
+
+        if (!r.ok) {
+            throw new IllegalStateException("T115 failed: " + r.error);
+        }
+
+        if (r.innerContentJson == null || r.innerContentJson.isBlank()) {
+            throw new IllegalStateException("T115 returned empty content JSON.");
+        }
+
+        // 2) Parse inner content JSON
+        JsonNode root = MAPPER.readTree(r.innerContentJson);
+
+        // According to your response, UOMs are in "rateUnit".
+        JsonNode rateUnit = root.get("rateUnit");
+        if (rateUnit == null || !rateUnit.isArray()) {
+            throw new IllegalStateException("T115: 'rateUnit' array not found in content.");
+        }
+
+        List<Uom> list = new java.util.ArrayList<>();
+
+        for (JsonNode node : rateUnit) {
+            // EFRIS fields:
+            //  name : "PCE-Piece"
+            //  value: "PCE"
+            //  description: optional (sometimes present, sometimes not)
+            String code = node.hasNonNull("value") ? node.get("value").asText() : null;
+            String name = node.hasNonNull("name")  ? node.get("name").asText()  : null;
+            String desc = node.hasNonNull("description") ? node.get("description").asText() : null;
+
+            if (code == null || code.isBlank()) {
+                // If no code, skip – EFRIS can't use it anyway
+                continue;
+            }
+
+            Uom u = new Uom(code.trim(), name, desc);
+            list.add(u);
+        }
+
+        // 3) Persist to DB
+        UomDAO.upsertAll(list);
+
+        // 4) Optional: log how many
+        AppLog.ok("efris", "UOM_SYNC", "Synced " + list.size() + " UOM entries from T115.");
+
+        return list.size();
     }
 }

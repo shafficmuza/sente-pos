@@ -17,7 +17,7 @@ public class ProductsListFrame extends JFrame {
     private final JButton btnEdit = new JButton("Edit");
     private final JButton btnDeactivate = new JButton("Deactivate");
     private final JButton btnActivate = new JButton("Activate");
-    // NEW: Adjust Stock button
+    // Adjust Stock button
     private final JButton btnAdjust = new JButton("Adjust Stock");
 
     private final JTable table = new JTable();
@@ -35,12 +35,22 @@ public class ProductsListFrame extends JFrame {
         table.setDefaultRenderer(Object.class, new LowStockRenderer(model));
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        // sensible column widths
-        table.getColumnModel().getColumn(0).setPreferredWidth(50);   // ID
-        table.getColumnModel().getColumn(1).setPreferredWidth(220);  // Name
-        table.getColumnModel().getColumn(2).setPreferredWidth(110);  // SKU
-        table.getColumnModel().getColumn(9).setPreferredWidth(80);   // Stock
-        table.getColumnModel().getColumn(10).setPreferredWidth(80);  // Reorder
+        // sensible column widths (guarded)
+        if (table.getColumnModel().getColumnCount() > 0) {
+            table.getColumnModel().getColumn(0).setPreferredWidth(50);   // ID
+        }
+        if (table.getColumnModel().getColumnCount() > 1) {
+            table.getColumnModel().getColumn(1).setPreferredWidth(220);  // Name
+        }
+        if (table.getColumnModel().getColumnCount() > 2) {
+            table.getColumnModel().getColumn(2).setPreferredWidth(110);  // SKU
+        }
+        if (table.getColumnModel().getColumnCount() > 9) {
+            table.getColumnModel().getColumn(9).setPreferredWidth(80);   // Stock
+        }
+        if (table.getColumnModel().getColumnCount() > 10) {
+            table.getColumnModel().getColumn(10).setPreferredWidth(80);  // Reorder
+        }
 
         // top bar
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -53,7 +63,7 @@ public class ProductsListFrame extends JFrame {
         JPanel right = new JPanel(new GridLayout(0, 1, 6, 6));
         right.add(btnAdd);
         right.add(btnEdit);
-        right.add(btnAdjust);      // NEW
+        right.add(btnAdjust);
         right.add(btnActivate);
         right.add(btnDeactivate);
 
@@ -69,7 +79,7 @@ public class ProductsListFrame extends JFrame {
         btnEdit.addActionListener(e -> onEdit());
         btnDeactivate.addActionListener(e -> onToggle(false));
         btnActivate.addActionListener(e -> onToggle(true));
-        btnAdjust.addActionListener(e -> onAdjust()); // NEW
+        btnAdjust.addActionListener(e -> onAdjust());
 
         refresh();
     }
@@ -106,19 +116,39 @@ public class ProductsListFrame extends JFrame {
 
     private void onEdit() {
         Long id = selectedIdOrNull();
-        if (id == null) { JOptionPane.showMessageDialog(this, "Select a product first."); return; }
+        if (id == null) {
+            JOptionPane.showMessageDialog(this, "Select a product first.");
+            return;
+        }
         try {
             ProductRow r = ProductDAO.findById(id);
-            if (r == null) { JOptionPane.showMessageDialog(this, "Not found."); return; }
+            if (r == null) {
+                JOptionPane.showMessageDialog(this, "Not found.");
+                return;
+            }
 
+            // Build Product object to pass into EditProductDialog
             Product p = new Product(
-                    r.itemName, r.sku, r.commodityCode, r.isService,
-                    r.measureUnit, r.unitPrice != null ? r.unitPrice : 0, r.currency,
-                    r.vatCategory, r.vatRate != null ? r.vatRate : 0,
-                    r.barcode, r.brand, r.specification,
-                    r.packageUnit, r.packageQty, r.stockQty, r.reorderLevel, r.active
+                    r.itemName,
+                    r.sku,
+                    r.commodityCode,
+                    r.isService,
+                    r.measureUnit,
+                    r.unitPrice != null ? r.unitPrice : 0,
+                    r.currency,
+                    r.vatCategory,
+                    r.vatRate != null ? r.vatRate : 0,
+                    r.barcode,
+                    r.brand,
+                    r.specification,
+                    r.packageUnit,
+                    r.packageQty,
+                    r.stockQty,
+                    r.reorderLevel,
+                    r.active
             );
 
+            // Match the existing constructor: (Frame, long, Product)
             EditProductDialog dlg = new EditProductDialog(this, id, p);
             dlg.setLocationRelativeTo(this);
             dlg.setVisible(true);
@@ -130,7 +160,10 @@ public class ProductsListFrame extends JFrame {
 
     private void onToggle(boolean activate) {
         Long id = selectedIdOrNull();
-        if (id == null) { JOptionPane.showMessageDialog(this, "Select a product first."); return; }
+        if (id == null) {
+            JOptionPane.showMessageDialog(this, "Select a product first.");
+            return;
+        }
         try {
             ProductDAO.setActive(id, activate);
             refresh();
@@ -139,23 +172,31 @@ public class ProductsListFrame extends JFrame {
         }
     }
 
-    // NEW: Adjust Stock handler
+    // Adjust Stock handler
     private void onAdjust() {
-    Long id = selectedIdOrNull();
-    if (id == null) { JOptionPane.showMessageDialog(this, "Select a product first."); return; }
-    try {
-        var row = ProductDAO.findById(id);
-        AdjustStockDialog dlg = new AdjustStockDialog(this, true);
+        Long id = selectedIdOrNull();
+        if (id == null) {
+            JOptionPane.showMessageDialog(this, "Select a product first.");
+            return;
+        }
+        try {
+            ProductRow row = ProductDAO.findById(id);
+            if (row == null) {
+                JOptionPane.showMessageDialog(this, "Not found.");
+                return;
+            }
 
-        String prefill = (row != null && row.sku != null && !row.sku.isBlank())
-                ? row.sku
-                : (row != null ? row.itemName : "");
-        dlg.setInitialQuery(prefill);   // prefill first
-        dlg.setLocationRelativeTo(this);
-        dlg.setVisible(true);           // then show
-        refresh();
-    } catch (Exception ex) {
-        JOptionPane.showMessageDialog(this, "Failed: " + ex.getMessage());
+            AdjustStockDialog dlg = new AdjustStockDialog(this, true);
+
+            String prefill = (row.sku != null && !row.sku.isBlank())
+                    ? row.sku
+                    : (row.itemName != null ? row.itemName : "");
+            dlg.setInitialQuery(prefill);
+            dlg.setLocationRelativeTo(this);
+            dlg.setVisible(true);
+            refresh();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Failed: " + ex.getMessage());
+        }
     }
-}
 }

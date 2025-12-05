@@ -143,9 +143,9 @@ public class CreditNoteListPanel extends JPanel {
         if (ans != JOptionPane.YES_OPTION) return;
 
         try {
-            String fdn = CreditNoteService.fiscaliseCreditNote(r.id);
+            String cnNo = CreditNoteService.fiscaliseCreditNote(r.id);
             JOptionPane.showMessageDialog(this,
-                    "Credit note fiscalised successfully.\nEFRIS No: " + fdn,
+                    "Credit note fiscalised successfully.\nEFRIS CN Ref: " + cnNo,
                     "Success", JOptionPane.INFORMATION_MESSAGE);
             reload();
         } catch (Exception ex) {
@@ -172,9 +172,12 @@ public class CreditNoteListPanel extends JPanel {
 
     private static final class CreditNoteTableModel extends AbstractTableModel {
 
-        // Columns = old ones (ID, Sale ID, Date/Time, Reason, Subtotal, VAT, Total, Status)
-        //         + Total Qty
-        //         + EFRIS status, FDN, verification code, return message
+        // Columns:
+        //   ID, Sale ID, Date/Time, Reason, Total Qty, Subtotal, VAT, Total,
+        //   Local Status, EFRIS Status,
+        //   EFRIS Reference No,
+        //   EFRIS Invoice No / FDN,
+        //   Verification Code, Return Message
         private final String[] cols = {
                 "ID",
                 "Sale ID",
@@ -186,6 +189,7 @@ public class CreditNoteListPanel extends JPanel {
                 "Total",
                 "Local Status",
                 "EFRIS Status",
+                "EFRIS Reference No",
                 "EFRIS Invoice No / FDN",
                 "Verification Code",
                 "Return Message"
@@ -217,19 +221,20 @@ public class CreditNoteListPanel extends JPanel {
         @Override public Object getValueAt(int rowIndex, int columnIndex) {
             ListRow r = rows.get(rowIndex);
             return switch (columnIndex) {
-                case 0 -> r.id;
-                case 1 -> r.sale_id;
-                case 2 -> r.date_time;
-                case 3 -> r.reason;
-                case 4 -> r.total_qty;
-                case 5 -> r.subtotal;
-                case 6 -> r.vat_total;
-                case 7 -> r.total;
-                case 8 -> r.status;
-                case 9 -> r.efris_status;
-                case 10 -> r.efris_invoice_number;
-                case 11 -> r.efris_verification;
-                case 12 -> r.efris_error_message;
+                case 0  -> r.id;
+                case 1  -> r.sale_id;
+                case 2  -> r.date_time;
+                case 3  -> r.reason;
+                case 4  -> r.total_qty;
+                case 5  -> r.subtotal;
+                case 6  -> r.vat_total;
+                case 7  -> r.total;
+                case 8  -> r.status;
+                case 9  -> r.efris_status;
+                case 10 -> r.reference_number;      // <- DB column reference_number
+                case 11 -> r.efris_invoice_number;  // <- DB column invoice_number
+                case 12 -> r.efris_verification;
+                case 13 -> r.efris_error_message;
                 default -> "";
             };
         }
@@ -267,6 +272,5 @@ public class CreditNoteListPanel extends JPanel {
         dlg.setSize(1100, 500);
         dlg.toFront();
         dlg.setVisible(true);
-        
     }
 }

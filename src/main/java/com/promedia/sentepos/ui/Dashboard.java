@@ -4,10 +4,17 @@
  */
 package com.promedia.sentepos.ui;
 
+import com.promedia.sentepos.efris.EfrisClient;
+import com.promedia.sentepos.license.LicenseManager;
+import com.promedia.sentepos.service.EfrisDictionaryService;
 import java.awt.Frame;
 import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import javax.swing.JDialog;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 
 /**
  *
@@ -26,12 +33,33 @@ public class Dashboard extends javax.swing.JFrame {
         initComponents();
         this.username = username;
         usernameLabel.setText("User: "+ username);
+        // Disable Licesing
+        //startExpiryMonitor();
+
     }
     
 
     private Dashboard() {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
+    
+    private void startExpiryMonitor() {
+    Timer timer = new Timer(10000, new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (!LicenseManager.isTrialActive()) {
+                JOptionPane.showMessageDialog(null,
+                        "Your trial has expired. SentePOS will now close.",
+                        "Trial Expired",
+                        JOptionPane.WARNING_MESSAGE);
+                System.exit(0);
+            }
+        }
+    });
+
+    timer.start();
+}
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -50,6 +78,8 @@ public class Dashboard extends javax.swing.JFrame {
         userLabel = new javax.swing.JLabel();
         usernameLabel = new javax.swing.JLabel();
         creditNotesLabel = new javax.swing.JLabel();
+        unitOfMeasure = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("SentePOS — Dashboard");
@@ -138,6 +168,16 @@ public class Dashboard extends javax.swing.JFrame {
             }
         });
 
+        unitOfMeasure.setText("Unit Of Measure");
+        unitOfMeasure.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                unitOfMeasureMouseClicked(evt);
+            }
+        });
+
+        jLabel1.setFont(new java.awt.Font("Helvetica Neue", 0, 18)); // NOI18N
+        jLabel1.setText("For Support      WhatsApp: 0775200442    Calls: +1 224 373 0803");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -147,21 +187,26 @@ public class Dashboard extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(usernameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(setupLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(salesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(creditNotesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(36, 36, 36)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(posLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(unitOfMeasure, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 46, Short.MAX_VALUE)
+                                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 541, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(setupLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(salesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(creditNotesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(36, 36, 36)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(efrisLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(posLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 206, Short.MAX_VALUE))
                                 .addGap(34, 34, 34)
-                                .addComponent(productLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(efrisLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(userLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                .addContainerGap(90, Short.MAX_VALUE))
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(productLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(userLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addGap(115, 115, 115)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -182,7 +227,11 @@ public class Dashboard extends javax.swing.JFrame {
                         .addComponent(salesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(creditNotesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(64, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(unitOfMeasure, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
         );
 
         pack();
@@ -226,8 +275,35 @@ public class Dashboard extends javax.swing.JFrame {
         // TODO add your handling code here:
          CreditNoteListPanel.openInDialog(this); // To be Deleted
        // new CreditNotesListFrame().setVisible(true);
-        //CreditNotesListFrame.open();
+        
     }//GEN-LAST:event_creditNotesLabelMouseClicked
+
+    
+    private void unitOfMeasureMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_unitOfMeasureMouseClicked
+        try {
+            // somewhere in your admin/settings screen:
+            EfrisClient client = new EfrisClient();
+            int count = client.syncUomDictionaryToDb(null);
+            JOptionPane.showMessageDialog(this,
+                    "Synced " + count + " Unit of Measure entries from EFRIS.");
+            
+            
+            /**
+             * EfrisClient client = new EfrisClient();
+             * EfrisClient.Result r = null;
+             * try {
+             * r = client.fetchUnitOfMeasureDictionary(null);
+             * } catch (Exception ex) {
+             * System.getLogger(Dashboard.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+             * }
+             * 
+             * System.out.println(r.ok);
+             * System.out.println(r.innerContentJson);
+             */} catch (Exception ex) {
+            System.getLogger(Dashboard.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        }
+
+    }//GEN-LAST:event_unitOfMeasureMouseClicked
 
     /**
      * @param args the command line arguments
@@ -258,10 +334,12 @@ public class Dashboard extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel creditNotesLabel;
     private javax.swing.JLabel efrisLabel;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel posLabel;
     private javax.swing.JLabel productLabel;
     private javax.swing.JLabel salesLabel;
     private javax.swing.JLabel setupLabel;
+    private javax.swing.JLabel unitOfMeasure;
     private javax.swing.JLabel userLabel;
     private javax.swing.JLabel usernameLabel;
     // End of variables declaration//GEN-END:variables

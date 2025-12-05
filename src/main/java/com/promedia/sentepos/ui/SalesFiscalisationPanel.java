@@ -1,7 +1,9 @@
 package com.promedia.sentepos.ui;
 
 import com.promedia.sentepos.dao.EfrisStatusDAO;
-import com.promedia.sentepos.service.PosService; // retry method call (optional; if you don't have it, comment out)
+import com.promedia.sentepos.dao.SaleDAO;
+import com.promedia.sentepos.dao.SaleDAO.Aggregate;
+import com.promedia.sentepos.service.FiscalService;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -141,22 +143,47 @@ public class SalesFiscalisationPanel extends JPanel {
         }
     }
 
+    /** Retry fiscalisation by re-calling FiscalService.fiscalise(..) like SalesListDialog. */
     private void retry() {
         int row = table.getSelectedRow();
-        if (row < 0) { JOptionPane.showMessageDialog(this, "Select a row first"); return; }
+        if (row < 0) {
+            JOptionPane.showMessageDialog(this, "Select a row first");
+            return;
+        }
+
         long saleId = Long.parseLong(model.getValueAt(row, 0).toString());
-        int ok = JOptionPane.showConfirmDialog(this,
-                "Retry fiscalise for sale #" + saleId + "?", "Confirm",
-                JOptionPane.YES_NO_OPTION);
+
+        int ok = JOptionPane.showConfirmDialog(
+                this,
+                "Retry fiscalise for sale #" + saleId + "?",
+                "Confirm",
+                JOptionPane.YES_NO_OPTION
+        );
         if (ok != JOptionPane.YES_OPTION) return;
 
         try {
-            // If you already implemented it:
-            PosService.retryFiscalise(saleId); // comment/remove if you don’t have this yet
-            JOptionPane.showMessageDialog(this, "Queued/retired fiscalisation for sale #" + saleId);
+            // Load the same aggregate used on SalesListDialog
+            Aggregate agg = SaleDAO.loadAggregate(saleId);
+
+            // Re-send to EFRIS just like the 'Fiscalise' button
+            String invoiceNo = FiscalService.fiscalise(saleId, agg.sale, agg.payment);
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Retried successfully.\nInvoice No: " + invoiceNo,
+                    "Success",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+
+            // Refresh table so status/invoice fields update
             refresh();
         } catch (Throwable t) {
-            JOptionPane.showMessageDialog(this, "Retry failed: " + t.getMessage());
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Retry failed: " + t.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
         }
     }
 

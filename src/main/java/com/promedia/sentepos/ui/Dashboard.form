@@ -31,32 +31,39 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="0" attributes="0">
+          <Group type="102" attributes="0">
               <EmptySpace min="-2" pref="103" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="1" attributes="0">
                   <Component id="usernameLabel" min="-2" pref="206" max="-2" attributes="0"/>
-                  <Group type="102" attributes="0">
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="setupLabel" alignment="0" min="-2" pref="206" max="-2" attributes="0"/>
-                          <Component id="salesLabel" alignment="0" min="-2" pref="206" max="-2" attributes="0"/>
-                          <Component id="creditNotesLabel" min="-2" pref="206" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace min="-2" pref="36" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                  <Group type="102" alignment="1" attributes="0">
+                      <Group type="103" groupAlignment="1" max="-2" attributes="0">
                           <Group type="102" attributes="0">
-                              <Component id="posLabel" min="-2" pref="206" max="-2" attributes="0"/>
+                              <Component id="unitOfMeasure" min="-2" pref="101" max="-2" attributes="0"/>
+                              <EmptySpace pref="46" max="32767" attributes="0"/>
+                              <Component id="jLabel1" min="-2" pref="541" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="setupLabel" alignment="0" min="-2" pref="206" max="-2" attributes="0"/>
+                                  <Component id="salesLabel" alignment="0" min="-2" pref="206" max="-2" attributes="0"/>
+                                  <Component id="creditNotesLabel" min="-2" pref="206" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace min="-2" pref="36" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                  <Component id="efrisLabel" max="32767" attributes="0"/>
+                                  <Component id="posLabel" pref="206" max="32767" attributes="0"/>
+                              </Group>
                               <EmptySpace min="-2" pref="34" max="-2" attributes="0"/>
-                              <Component id="productLabel" min="-2" pref="206" max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="102" attributes="0">
-                              <Component id="efrisLabel" min="-2" pref="206" max="-2" attributes="0"/>
-                              <EmptySpace max="32767" attributes="0"/>
-                              <Component id="userLabel" min="-2" pref="206" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="productLabel" min="-2" pref="206" max="-2" attributes="0"/>
+                                  <Component id="userLabel" min="-2" pref="206" max="-2" attributes="0"/>
+                              </Group>
                           </Group>
                       </Group>
+                      <EmptySpace min="-2" pref="115" max="-2" attributes="0"/>
                   </Group>
               </Group>
-              <EmptySpace pref="90" max="32767" attributes="0"/>
+              <EmptySpace max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -83,7 +90,12 @@
                       <Component id="creditNotesLabel" min="-2" pref="42" max="-2" attributes="0"/>
                   </Group>
               </Group>
-              <EmptySpace pref="64" max="32767" attributes="0"/>
+              <EmptySpace pref="27" max="32767" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="unitOfMeasure" alignment="3" min="-2" pref="29" max="-2" attributes="0"/>
+                  <Component id="jLabel1" alignment="3" min="-2" pref="29" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -221,6 +233,22 @@
       <Events>
         <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="creditNotesLabelMouseClicked"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="unitOfMeasure">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Unit Of Measure"/>
+      </Properties>
+      <Events>
+        <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="unitOfMeasureMouseClicked"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="jLabel1">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="Helvetica Neue" size="18" style="0"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="For Support      WhatsApp: 0775200442    Calls: +1 224 373 0803"/>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>
