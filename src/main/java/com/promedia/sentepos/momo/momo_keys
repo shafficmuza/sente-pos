@@ -1,0 +1,38 @@
+POST https://sandbox.momodeveloper.mtn.com/v1_0/apiuser HTTP/1.1
+
+X-Reference-Id: b4a4c5a8-0d57-4b18-b056-5e6f1c3da7c9
+Content-Type: application/json
+Cache-Control: no-cache
+Ocp-Apim-Subscription-Key: 9dc12346168343468b0ef45536ba2953
+
+{
+    providerCallbackHost: "string"
+}
+
+
+HTTP response
+HTTP/1.1 200 OK
+
+cache-control: no-cache
+content-length: 247
+content-type: text/html; charset=utf-8
+pragma: no-cache
+vary: Origin
+x-content-type-options: nosniff
+x-frame-options: SAMEORIGIN
+x-xss-protection: 1; mode=block
+
+<html><head><title>Request Rejected</title></head>
+<body>The requested URL was rejected. Please consult with your administrator.<br>
+
+<br>Your support ID is: 11883536280187020650
+
+<br><br><a href='javascript:history.back();'>[Go Back]</a></body></html>
+
+{
+    "apiKey": "39c0b5ea4916450d84f715c95ddc27b6"
+}
+
+call back: https://prosystemsug.com/sentepos/process.php
+
+okay lets implements a robust Online Licensing system. cloud will be mysql database. and in the mean time will will be activating licences manually online after a client has made a payment offline. 
