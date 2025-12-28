@@ -1,219 +1,173 @@
 package com.promedia.sentepos.license;
 
-import java.io.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.security.MessageDigest;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.time.Instant;
+import java.util.Locale;
+import java.util.UUID;
 
-public class LicenseManager {
+public final class LicenseManager {
 
-    private static final String SECRET_KEY = "PROMEDIA-SYSTEMS-KEY-2025";
+    private LicenseManager() {}
 
-    // Hidden file location
-    private static final String TRIAL_FILE =
-            System.getProperty("os.name").toLowerCase().contains("win")
-                    ? "C:\\\\ProgramData\\\\.pms_trial.dat"
-                    : "/usr/local/share/.pms_trial.dat";
+    public static final String SERVER_BASE = "https://sentepos.com/sentepos";
 
-    // Default trial length in minutes for FIRST install
-    private static final int DEFAULT_TRIAL_MINUTES = 720;   // change as needed
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    // How many minutes of backward jump we tolerate before crying tamper
-    private static final int BACKWARD_TOLERANCE_MIN = 2;
+    private static final String SECRET_KEY = "SENTE-POS-LICENSE-2025"; // local integrity only
+    private static final Path DATA_DIR = Paths.get(System.getProperty("user.home"), ".sentepos");
+    private static final Path DEVICE_FILE = DATA_DIR.resolve("device.id");
+    private static final Path LICENSE_FILE = DATA_DIR.resolve("license.dat");
 
-    // ***** ADMIN RESET KEYS (Minutes) *****
-    public static final String RESET_6_HR_KEY   = "ADMIN-RESET-6H";    // 360 min
-    public static final String RESET_10_MIN_KEY = "ADMIN-RESET-10M";
-    public static final String RESET_30_MIN_KEY = "ADMIN-RESET-30M";
-    public static final String RESET_60_MIN_KEY = "ADMIN-RESET-60M";
-
-    // ***** USER FULL ACTIVATION KEY *****
-    public static final String ACTIVATION_KEY = "PROMEDIA-2025-ACTIVE";
-
-    /**
-     * File format (semicolon separated):
-     * startedOn;durationMinutes;lastRun;hash;activated
-     *
-     * hash = SHA256(startedOn + ";" + durationMinutes + ";" + lastRun + SECRET_KEY)
-     */
-
-    // Create hidden file automatically on first run
-    public static void initializeTrial() {
+    // ---- Device Id ----
+    public static String getOrCreateDeviceId() {
         try {
-            File file = new File(TRIAL_FILE);
-
-            if (!file.exists()) {
-                LocalDateTime now = LocalDateTime.now();
-                LocalDateTime startedOn = now;
-                LocalDateTime lastRun = now;
-                int durationMinutes = DEFAULT_TRIAL_MINUTES;
-
-                String hash = sha256(startedOn.toString() + ";" + durationMinutes + ";" + lastRun.toString() + SECRET_KEY);
-                String content = startedOn.toString() + ";" +
-                                 durationMinutes + ";" +
-                                 lastRun.toString() + ";" +
-                                 hash + ";" +
-                                 "0";  // activated = 0
-                writeFile(content);
+            Files.createDirectories(DATA_DIR);
+            if (Files.exists(DEVICE_FILE)) {
+                String id = Files.readString(DEVICE_FILE, StandardCharsets.UTF_8).trim();
+                if (!id.isBlank()) return id;
             }
-
+            String id = UUID.randomUUID().toString();
+            Files.writeString(DEVICE_FILE, id, StandardCharsets.UTF_8,
+                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            return id;
         } catch (Exception e) {
-            e.printStackTrace();
+            return UUID.randomUUID().toString();
         }
     }
 
-    // Check if trial is active (and also detect time tampering)
-    public static boolean isTrialActive() {
-        try {
-            File file = new File(TRIAL_FILE);
-            if (!file.exists()) return false;
-
-            String[] parts = readFile().split(";");
-            if (parts.length < 5) return false; // invalid / old file
-
-            String startedOnStr   = parts[0];
-            int durationMinutes   = Integer.parseInt(parts[1]);
-            String lastRunStr     = parts[2];
-            String storedHash     = parts[3];
-            int activated         = Integer.parseInt(parts[4]);
-
-            LocalDateTime startedOn = LocalDateTime.parse(startedOnStr);
-            LocalDateTime lastRun   = LocalDateTime.parse(lastRunStr);
-            LocalDateTime now       = LocalDateTime.now();
-
-            // FULL ACTIVATED
-            if (activated == 1) return true;
-
-            // Verify hash (integrity)
-            String expectedHash = sha256(startedOnStr + ";" + durationMinutes + ";" + lastRunStr + SECRET_KEY);
-            if (!storedHash.equals(expectedHash)) {
-                // Tampering with file content
-                return false;
-            }
-
-            // Detect clock rollback: if 'now' is significantly before lastRun
-            long minutesBackward = ChronoUnit.MINUTES.between(now, lastRun); // positive if lastRun > now
-            if (minutesBackward > BACKWARD_TOLERANCE_MIN) {
-                // User moved the clock back too much -> treat as tampering
-                return false;
-            }
-
-            // Calculate total minutes used since trial started
-            long minutesUsed = ChronoUnit.MINUTES.between(startedOn, now);
-
-            boolean stillValid = minutesUsed <= durationMinutes;
-
-            // If still valid, update lastRun to now and re-hash (to move time forward)
-            if (stillValid) {
-                LocalDateTime newLastRun = now;
-                String newHash = sha256(startedOn.toString() + ";" + durationMinutes + ";" + newLastRun.toString() + SECRET_KEY);
-                String updatedContent = startedOn.toString() + ";" +
-                                        durationMinutes + ";" +
-                                        newLastRun.toString() + ";" +
-                                        newHash + ";" +
-                                        activated;
-                writeFile(updatedContent);
-            }
-
-            return stillValid;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-    
-
-    // ***** APPLY ADMIN KEYS *****
-    public static boolean applyAdminKey(String key) {
-        try {
-            if (key.equals(RESET_6_HR_KEY)) {
-                resetTrialMinutes(360); // 6 hours
-                return true;
-            }
-            if (key.equals(RESET_10_MIN_KEY)) {
-                resetTrialMinutes(10);
-                return true;
-            }
-            if (key.equals(RESET_30_MIN_KEY)) {
-                resetTrialMinutes(30);
-                return true;
-            }
-            if (key.equals(RESET_60_MIN_KEY)) {
-                resetTrialMinutes(60);
-                return true;
-            }
-            return false;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
+    public static String getMachineId() {
+        String raw = System.getProperty("os.name") + "|" +
+                System.getProperty("os.arch") + "|" +
+                System.getProperty("user.name") + "|" +
+                getOrCreateDeviceId();
+        return sha256(raw);
     }
 
-    // Reset trial: new start time = now, fresh duration, lastRun = now
-    private static void resetTrialMinutes(int minutes) throws Exception {
-        LocalDateTime now           = LocalDateTime.now();
-        LocalDateTime startedOn     = now;
-        LocalDateTime lastRun       = now;
-        int durationMinutes         = minutes;
-
-        String hash = sha256(startedOn.toString() + ";" + durationMinutes + ";" + lastRun.toString() + SECRET_KEY);
-        String content = startedOn.toString() + ";" +
-                         durationMinutes + ";" +
-                         lastRun.toString() + ";" +
-                         hash + ";" +
-                         "0"; // not activated
-        writeFile(content);
+    // ---- License Check ----
+    public static boolean isLicensed() {            // <-- for SentePOS.java compatibility
+        return isLicensedNow();
     }
 
-    // ***** NORMAL ACTIVATION *****
-    public static boolean activateSoftware(String key) {
-        if (!key.equals(ACTIVATION_KEY))
-            return false;
-
+    public static boolean isLicensedNow() {
         try {
-            String[] parts = readFile().split(";");
-            if (parts.length < 5) return false;
+            if (!Files.exists(LICENSE_FILE)) return false;
 
-            String startedOnStr   = parts[0];
-            String durationStr    = parts[1];
-            String lastRunStr     = parts[2];
-            String hash           = parts[3];
+            String content = Files.readString(LICENSE_FILE, StandardCharsets.UTF_8);
+            JsonNode root = MAPPER.readTree(content);
 
-            String updated = startedOnStr + ";" +
-                             durationStr + ";" +
-                             lastRunStr + ";" +
-                             hash + ";" +
-                             "1";  // 1 = activated
-            writeFile(updated);
-            return true;
+            String token = text(root, "licenseToken");
+            long expiresAt = root.path("expiresAt").asLong(0);
+            String savedHash = text(root, "hash");
 
+            if (token == null || token.isBlank()) return false;
+            if (expiresAt <= 0) return false;
+
+            String calcHash = sha256(token + ";" + expiresAt + ";" + SECRET_KEY);
+            if (!calcHash.equals(savedHash)) return false;
+
+            long now = Instant.now().getEpochSecond();
+            return now < expiresAt;
         } catch (Exception e) {
             return false;
         }
     }
 
-    // ***** UTILITY FUNCTIONS *****
-    private static String sha256(String base) throws Exception {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] hash = digest.digest(base.getBytes("UTF-8"));
-        StringBuilder hexString = new StringBuilder();
-        for (byte b : hash) {
-            String hex = Integer.toHexString(0xff & b);
-            if (hex.length() == 1)
-                hexString.append('0');
-            hexString.append(hex);
+    public static void saveLicenseToken(String licenseToken, long expiresAtEpochSeconds) throws IOException {
+        Files.createDirectories(DATA_DIR);
+        String hash = sha256(licenseToken + ";" + expiresAtEpochSeconds + ";" + SECRET_KEY);
+
+        String json = "{\n" +
+                "  \"licenseToken\": \"" + esc(licenseToken) + "\",\n" +
+                "  \"expiresAt\": " + expiresAtEpochSeconds + ",\n" +
+                "  \"hash\": \"" + hash + "\"\n" +
+                "}\n";
+
+        Files.writeString(LICENSE_FILE, json, StandardCharsets.UTF_8,
+                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+    }
+
+    // ---- Main Flow ----
+   // in LicenseManager.java
+
+public static String payAndActivate(String plan, String msisdn) throws Exception {
+    final String deviceId = getOrCreateDeviceId();
+    final String machineId = getMachineId();
+
+    String p = (plan == null ? "MONTHLY" : plan.trim().toUpperCase(Locale.ROOT));
+    if (!p.equals("MONTHLY") && !p.equals("YEARLY")) p = "MONTHLY";
+
+    String phone = (msisdn == null) ? "" : msisdn.replaceAll("\\D+", "");
+    if (phone.isBlank()) throw new IllegalArgumentException("Phone/MSISDN is required.");
+
+    String externalId = "SENTE_" + p + "_" + System.currentTimeMillis();
+
+    LicenseApiClient api = new LicenseApiClient(SERVER_BASE);
+
+    // ✅ FIX: call with 5 args (matches LicenseApiClient)
+    LicenseApiClient.CreatePaymentResponse created =
+            api.createPayment(deviceId, machineId, phone, p, externalId);
+
+    if (!created.ok) {
+        String extra = (created.momoBody != null && !created.momoBody.isBlank())
+                ? (" | momoBody: " + created.momoBody)
+                : "";
+        throw new IOException("License issue failed: " + created.error + extra);
+    }
+    if (created.referenceId == null || created.referenceId.isBlank()) {
+        throw new IOException("Server did not return referenceId.");
+    }
+
+    // poll server for status
+    for (int i = 0; i < 60; i++) {
+        Thread.sleep(3000);
+
+        LicenseApiClient.StatusResponse st = api.checkStatus(created.referenceId, deviceId);
+        String status = (st.status == null) ? "" : st.status.trim();
+
+        if ("SUCCESSFUL".equalsIgnoreCase(status)) {
+            if (st.licenseToken == null || st.licenseToken.isBlank())
+                throw new IOException("SUCCESSFUL but server did not return licenseToken.");
+            if (st.expiresAt <= 0)
+                throw new IOException("SUCCESSFUL but server did not return expiresAt.");
+
+            saveLicenseToken(st.licenseToken, st.expiresAt);
+            return st.licenseToken;
         }
-        return hexString.toString();
+
+        if ("FAILED".equalsIgnoreCase(status) || "REJECTED".equalsIgnoreCase(status)) {
+            throw new IOException("Payment " + status + ". Try again.");
+        }
     }
 
-    private static void writeFile(String content) throws IOException {
-        Files.write(Paths.get(TRIAL_FILE), content.getBytes());
+    throw new IOException("Timed out waiting for payment confirmation.");
+}
+    // ---- Helpers ----
+    private static String text(JsonNode n, String name) {
+        if (n == null) return null;
+        JsonNode v = n.get(name);
+        return (v != null && !v.isNull()) ? v.asText(null) : null;
     }
 
-    private static String readFile() throws IOException {
-        return new String(Files.readAllBytes(Paths.get(TRIAL_FILE)));
+    private static String sha256(String s) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] dig = md.digest(s.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : dig) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private static String esc(String s) {
+        if (s == null) return "";
+        return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }

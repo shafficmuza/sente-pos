@@ -219,15 +219,16 @@ public final class Migrations {
               + " active INTEGER NOT NULL DEFAULT 1,"
               + " created_at TEXT DEFAULT (datetime('now'))"
               + ");";
+            
+        
+        final String idxMeasureUnitsCode =
+            "CREATE INDEX IF NOT EXISTS idx_measure_units_code ON measure_units(code);";
 
-final String idxMeasureUnitsCode =
-    "CREATE INDEX IF NOT EXISTS idx_measure_units_code ON measure_units(code);";
-
-// Seed default 'Piece' if table is empty
-final String seedMeasureUnits =
-    "INSERT INTO measure_units(code, name, active) "
-  + "SELECT '10', 'Piece', 1 "
-  + "WHERE NOT EXISTS (SELECT 1 FROM measure_units);";
+        // Seed default 'Piece' if table is empty
+        final String seedMeasureUnits =
+            "INSERT INTO measure_units(code, name, active) "
+          + "SELECT '10', 'Piece', 1 "
+          + "WHERE NOT EXISTS (SELECT 1 FROM measure_units);";
 
         final String idxCnSale = "CREATE INDEX IF NOT EXISTS idx_credit_notes_sale ON credit_notes(sale_id);";
         final String idxCnStatus = "CREATE INDEX IF NOT EXISTS idx_efris_credit_notes_status ON efris_credit_notes(status);";
@@ -273,6 +274,26 @@ final String seedMeasureUnits =
             addColumnIfMissing(c, "efris_invoices", "verification_code", "TEXT");
             addColumnIfMissing(c, "efris_invoices", "invoice_id", "TEXT");
              addColumnIfMissing(c, "efris_credit_notes", "reference_number", "TEXT");
+             
+             
+             st.execute("""
+                CREATE TABLE IF NOT EXISTS app_device (
+                    device_id TEXT PRIMARY KEY,
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+                )
+            """);
+
+            st.execute("""
+                CREATE TABLE IF NOT EXISTS app_license (
+                    device_id     TEXT PRIMARY KEY,
+                    license_token TEXT NOT NULL,
+                    exp_epoch     INTEGER NOT NULL,
+                    last_sync_epoch INTEGER NOT NULL,
+                    status        TEXT DEFAULT 'ACTIVE',
+                    updated_at    TEXT DEFAULT CURRENT_TIMESTAMP
+                )
+            """);
+            
             
         } catch (SQLException e) {
             throw new RuntimeException("DB migration failed", e);

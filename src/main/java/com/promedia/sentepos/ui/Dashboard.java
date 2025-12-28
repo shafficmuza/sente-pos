@@ -6,6 +6,7 @@ package com.promedia.sentepos.ui;
 
 import com.promedia.sentepos.efris.EfrisClient;
 import com.promedia.sentepos.license.LicenseManager;
+import com.promedia.sentepos.momo.MomoClient;
 import com.promedia.sentepos.service.EfrisDictionaryService;
 import java.awt.Frame;
 import java.awt.Window;
@@ -23,7 +24,16 @@ import javax.swing.Timer;
 public class Dashboard extends javax.swing.JFrame {
     
     private String username = null;
-    
+    private static final String MOMO_HOST = "https://sandbox.momodeveloper.mtn.com";
+    // Product base path
+    private static final String COLLECTION_BASE_URL = MOMO_HOST + "/collection/v1_0";
+    // Subscription key (Primary)
+    private static final String SUBSCRIPTION_KEY = "9dc12346168343468b0ef45536ba2953";
+    // API user + key (yours that worked)
+    private static final String API_USER_ID = "b4a4c5a8-0d57-4b18-b056-5e6f1c3da7c9";
+    private static final String API_KEY     = "39c0b5ea4916450d84f715c95ddc27b6";
+    // sandbox / production
+    private static final String TARGET_ENVIRONMENT = "sandbox";
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Dashboard.class.getName());
 
     /**
@@ -47,13 +57,7 @@ public class Dashboard extends javax.swing.JFrame {
     Timer timer = new Timer(10000, new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-            if (!LicenseManager.isTrialActive()) {
-                JOptionPane.showMessageDialog(null,
-                        "Your trial has expired. SentePOS will now close.",
-                        "Trial Expired",
-                        JOptionPane.WARNING_MESSAGE);
-                System.exit(0);
-            }
+            
         }
     });
 
@@ -80,6 +84,8 @@ public class Dashboard extends javax.swing.JFrame {
         creditNotesLabel = new javax.swing.JLabel();
         unitOfMeasure = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
+        txtMomo = new javax.swing.JLabel();
+        lbl_activate = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("SentePOS — Dashboard");
@@ -178,14 +184,33 @@ public class Dashboard extends javax.swing.JFrame {
         jLabel1.setFont(new java.awt.Font("Helvetica Neue", 0, 18)); // NOI18N
         jLabel1.setText("For Support      WhatsApp: 0775200442    Calls: +1 224 373 0803");
 
+        txtMomo.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        txtMomo.setText("Test MOMO");
+        txtMomo.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                txtMomoMouseClicked(evt);
+            }
+        });
+
+        lbl_activate.setFont(new java.awt.Font("Helvetica Neue", 1, 14)); // NOI18N
+        lbl_activate.setText("Activate License");
+        lbl_activate.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lbl_activateMouseClicked(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(103, 103, 103)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(usernameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lbl_activate, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(usernameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                             .addGroup(layout.createSequentialGroup()
@@ -204,7 +229,8 @@ public class Dashboard extends javax.swing.JFrame {
                                 .addGap(34, 34, 34)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(productLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(userLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                    .addComponent(userLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(txtMomo, javax.swing.GroupLayout.PREFERRED_SIZE, 187, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(115, 115, 115)))
                 .addContainerGap(63, Short.MAX_VALUE))
         );
@@ -212,8 +238,13 @@ public class Dashboard extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(17, 17, 17)
-                .addComponent(usernameLabel)
-                .addGap(27, 27, 27)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(usernameLabel)
+                        .addGap(27, 27, 27))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lbl_activate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(setupLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(posLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -227,7 +258,9 @@ public class Dashboard extends javax.swing.JFrame {
                         .addComponent(salesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(creditNotesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 81, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
+                .addComponent(txtMomo, javax.swing.GroupLayout.DEFAULT_SIZE, 33, Short.MAX_VALUE)
+                .addGap(30, 30, 30)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(unitOfMeasure, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -305,6 +338,65 @@ public class Dashboard extends javax.swing.JFrame {
 
     }//GEN-LAST:event_unitOfMeasureMouseClicked
 
+    private void txtMomoMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtMomoMouseClicked
+           
+        MomoClient client = new MomoClient(
+            COLLECTION_BASE_URL,
+            SUBSCRIPTION_KEY,
+            API_USER_ID,
+            API_KEY,
+            TARGET_ENVIRONMENT
+    );
+        
+        
+
+    try {
+        String token = client.getAccessToken();
+        System.out.println("Access token OK");
+
+        // 1) Send a payment prompt to the phone
+        String referenceId = client.requestToPay(
+                token,
+                "1000",
+                "EUR",
+                "256775200442",          // <-- put a test MSISDN here (digits only)
+                "SENTE_LICENSE_0001",    // externalId (your own reference)
+                "Pay SentePOS License",
+                "SentePOS"
+        );
+
+        System.out.println("ReferenceId = " + referenceId);
+
+        // 2) Poll status until it becomes SUCCESSFUL / FAILED / REJECTED
+        for (int i = 0; i < 30; i++) {     // 30 tries
+            Thread.sleep(3000);            // every 3 seconds
+
+            var statusJson = client.getTransactionStatus(token, referenceId);
+            System.out.println("STATUS JSON: " + statusJson.toPrettyString());
+
+            String status = statusJson.hasNonNull("status")
+                    ? statusJson.get("status").asText("")
+                    : "";
+
+            if ("SUCCESSFUL".equalsIgnoreCase(status)
+                    || "FAILED".equalsIgnoreCase(status)
+                    || "REJECTED".equalsIgnoreCase(status)) {
+                System.out.println("FINAL STATUS = " + status);
+                break;
+            }
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    }//GEN-LAST:event_txtMomoMouseClicked
+
+    private void lbl_activateMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lbl_activateMouseClicked
+        // TODO add your handling code here:
+        ActivationWindow aw = new ActivationWindow();
+        aw.setVisible(true);
+    }//GEN-LAST:event_lbl_activateMouseClicked
+
     /**
      * @param args the command line arguments
      */
@@ -335,10 +427,12 @@ public class Dashboard extends javax.swing.JFrame {
     private javax.swing.JLabel creditNotesLabel;
     private javax.swing.JLabel efrisLabel;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel lbl_activate;
     private javax.swing.JLabel posLabel;
     private javax.swing.JLabel productLabel;
     private javax.swing.JLabel salesLabel;
     private javax.swing.JLabel setupLabel;
+    private javax.swing.JLabel txtMomo;
     private javax.swing.JLabel unitOfMeasure;
     private javax.swing.JLabel userLabel;
     private javax.swing.JLabel usernameLabel;
