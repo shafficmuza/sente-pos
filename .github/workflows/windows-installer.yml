@@ -1,0 +1,63 @@
+
+name: Build Windows Installer (jpackage)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    tags:
+      - "v*"
+
+jobs:
+  windows-installer:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout (master)
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+          cache: "maven"
+
+      - name: Build JAR (Maven)
+        run: mvn -B -DskipTests package
+
+      - name: Install WiX Toolset v3
+        shell: powershell
+        run: |
+          choco install wixtoolset --version=3.11.2 -y
+          echo "C:\Program Files (x86)\WiX Toolset v3.11\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Prepare dist
+        run: mkdir dist
+
+      - name: Package EXE (jpackage)
+        shell: powershell
+        run: |
+          jpackage `
+            --type exe `
+            --input target `
+            --name SentePOS `
+            --app-version 1.0.0 `
+            --vendor "SentePOS" `
+            --main-jar SentePOS-1.0-SNAPSHOT.jar `
+            --icon icon.ico `
+            --win-menu `
+            --win-shortcut `
+            --install-dir SentePOS `
+            --java-options "-Xms256m" `
+            --java-options "-Xmx1024m" `
+            --dest dist
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SentePOS-windows-installer
+          path: dist/*
