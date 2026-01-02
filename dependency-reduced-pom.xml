@@ -63,7 +63,7 @@
     </plugins>
   </build>
   <properties>
-    <maven.compiler.release>24</maven.compiler.release>
+    <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <exec.mainClass>com.promedia.sentepos.SentePOS</exec.mainClass>
   </properties>
