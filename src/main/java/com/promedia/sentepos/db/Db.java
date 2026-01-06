@@ -3,7 +3,7 @@ package com.promedia.sentepos.db;
 import java.sql.*;
 
 public final class Db {
-    private static final String URL = "jdbc:sqlite:app.db";
+    private static final String URL = "jdbc:sqlite:" + AppPaths.dbPath().toAbsolutePath();
     private static volatile boolean initialized = false;
 
     static {
